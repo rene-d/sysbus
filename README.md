@@ -133,7 +133,7 @@ L'option `-graph` de `sysbus.py` utilise Graphviz pour afficher le graphe entier
 
 ![graphe fonctionnel](https://raw.githubusercontent.com/rene-d/sysbus/master/docs/nemo_intf.png)
 
-En grisé, les blocs qui sont inaccessibles (ils sont découverts uniquement grâce aux liaisons upper et lower). Et en ellipse, les blocs désactivés.
+En grisé, les blocs qui sont inaccessibles (ils sont découverts uniquement grâce aux liaisons _upper_ et _lower_). Et en ellipse, les blocs désactivés.
 
 ## La topologie du réseau
 
@@ -145,7 +145,7 @@ Notamment, les périphériques connectés en Wi-Fi 2.4GHz (interface wl0) et ceu
 
 On y voit également les ports USB et l'UPnP.
 
-    $ ./sysbus.py -topo -simple
+    $ ./sysbus.py -topo simple
 
 ![topologie réseau](https://raw.githubusercontent.com/rene-d/sysbus/master/docs/devices.png)
 
