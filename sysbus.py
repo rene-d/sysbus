@@ -2,7 +2,7 @@
 # -*- encoding: utf-8 -*-
 # vim:set ts=4 sw=4 et:
 
-# René Devichi février 2016
+# René D. février 2016
 
 import sys
 import os
@@ -876,11 +876,18 @@ def add_commands(parser):
                             "id":"udp1701"})
 
     def graph_cmd(args):
+        """ affiche le graphe fonctionnel des interfaces """
 
         # charge graphviz
         Digraph = load_graphviz()
 
-        r = requete('NeMo.Intf.lo:getMIBs', { "traverse":"all", "mibs":"base" })
+        if len(args) > 0:
+            if len(args) >= 2:
+                r = requete('NeMo.Intf.%s:getMIBs' % args[0], { "traverse":args[1], "mibs":"base" })
+            else:
+                r = requete('NeMo.Intf.%s:getMIBs' % args[0], { "mibs":"base" })
+        else:
+            r = requete('NeMo.Intf.lo:getMIBs', { "traverse":"all", "mibs":"base" })
         if r is None: return
         if not 'status' in r or not 'base' in r['status']: return
         r = r['status']['base']
@@ -904,7 +911,7 @@ def add_commands(parser):
             for j in v['LLIntf']:
                 dot.edge(i, j)
 
-        dot.render(filename="nemo_intf", view=True)
+        dot.render(filename="nemo_intf.gv", view=True)
 
 
     ##
@@ -976,7 +983,7 @@ def add_commands(parser):
         for i in r:
             traverse(i)
 
-        dot.render(filename="devices", view=True)
+        dot.render(filename="devices.gv", view=True)
 
 
 

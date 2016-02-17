@@ -1,3 +1,8 @@
+nemo_intf.gv
+nemo_intf.gv.svg
+devices.gv
+devices.gv.svg
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
