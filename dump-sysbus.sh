@@ -53,7 +53,7 @@ progress 590   sysbus -topo noview
 progress 1260  sysbus -MIBs -out mibs_all
 progress 290   sysbus -MIBs show -out mibs.txt
 progress 14003 sysbus -MIBs dump
-progress 1750  sysbus -MIBs table -out mibs-table.txt
+progress 1750  sysbus -MIBs table -out mibs-table.md
 progress 1210  sysbus -MIBs table html -out mibs-table.html
 
 progress done

@@ -16,6 +16,7 @@ import functools
 import tempfile
 import configparser
 import datetime
+import html
 
 
 ##
@@ -234,7 +235,7 @@ def noauth():
 # @param get
 #
 # @return 
-def requete(chemin, args=None, get=False, raw=False):
+def requete(chemin, args=None, get=False, raw=False, silent=False):
 
     # nettoie le chemin de la requête
     c = str.replace(chemin, ".", "/")
@@ -284,8 +285,9 @@ def requete(chemin, args=None, get=False, raw=False):
     try:
         r = json.loads(t)
     except:
-        error("erreur:", sys.exc_info()[0])
-        error("mauvais json:", t)
+        if not silent:
+            error("erreur:", sys.exc_info()[0])
+            error("mauvais json:", t)
         return
 
     apercu = str(r)
@@ -298,7 +300,8 @@ def requete(chemin, args=None, get=False, raw=False):
             debug(1, "-------------------------")
             return r['result']
         else:
-            error("erreur:", t)
+            if not silent:
+                error("erreur:", t)
             return None
     
     else:
@@ -825,6 +828,7 @@ def add_commands(parser):
 '''<!DOCTYPE html>
 <html>
 <head>
+
 <style>
 table {
     width:100%;
@@ -853,27 +857,82 @@ table#t01 td:nth-child(1)	{
     color: blue;
     text-align: left;
 }
+
+.details {
+    white-space: pre;
+    font-family: monospace;
+    text-align: left;
+
+    border-color: darkblue;
+    border-width: 1px;
+    border-style: solid; 
+    position: absolute;
+    color: darkblue;
+    background-color: white;
+    z-index: 1;
+    display: none;
+}
 </style>
+
+<script>
+var last = null;
+function fenetre(nom, x) {
+    if (last) {
+        document.getElementById(last).style.display="none";
+    }
+    if (x) {
+        document.getElementById(nom).style.display="inline-block";
+        last = nom;
+    } else {
+        document.getElementById(nom).style.display="none";
+    }
+}
+</script>
+
 </head>
 <body>
+
 ''')
 
                     print('<table id="t01">')
+
+                    # la ligne d'entête
                     print('  <tr>')
                     print('    <th>%s</th>' % 'Intf')
                     for m in mibs:
                         print('    <th>%s</th>' % m)
                     print('  </tr>')
+
                     for i in intf:
                         print('  <tr>')
-                        print('    <td>%s</td>' % i)
+
+                        # la première colonne
+                        rr = requete("NeMo.Intf.%s:get" % i, silent=True)
+                        if not rr or 'status' not in rr:
+                            x = '<div style="color:red;">' + i + '</div>'
+                        else:
+                            details = html.escape(pprint.pformat(rr['status']))
+                            x = '\n<div id="%s" class="details" onclick="fenetre(\'%s\', 0)">' % (i, i)
+                            x += details
+                            x += '</div>\n'
+                            x += '<a onclick="fenetre(\'%s\', 1)">%s</a>' % (i, i)
+                        print('    <td>%s</td>' % x)
+
                         for m in mibs:
                             x = ""
                             if i in r[m]:
                                 if len(r[m][i]) == 0:
                                     x = "0"     # MIB déclarée mais vide
                                 else:
-                                    x = "X"     # il y a des valeurs pour la MIB
+                                    #x = "X"     # il y a des valeurs pour la MIB
+
+                                    x = '<div id="%s#%s" class="details" onclick="fenetre(\'%s#%s\', 0)">' % (i, m, i, m)
+                                    x += html.escape(pprint.pformat(r[m][i]))
+                                    x += '</div>'
+                                    x += '<div style="color:darkblue;">'
+                                    x += '<a onclick="fenetre(\'%s#%s\', 1)">X</a>' % (i, m)
+                                    x += '</div>'
+
                             print('    <td>%s</td>' % x)
                         print('  </tr>')
                     print('  </table>')
@@ -884,19 +943,29 @@ table#t01 td:nth-child(1)	{
 
                 else:
 
-                    s = "| {:15} |".format("Intf")
+                    len_intf = 0
+                    for i in intf:
+                        if len_intf < len(i): len_intf = len(i)
+
+                    s = "|{:{len}}|".format("Intf", len=len_intf)
                     for m in mibs:
-                        s += ' {:15} |'.format(m)
+                        len_m = len(m)
+                        if len_m < 3: len_m = 3
+                        s += '{:^{len}}|'.format(m, len=len_m)
                     print(s)
 
-                    s = "| :%s |" % ("-" * 14)
+                    s = "|:%s|" % ("-" * (len_intf - 1))
                     for m in mibs:
-                        s += " :%s: |" % ("-" * 13)
+                        len_m = len(m)
+                        if len_m < 3: len_m = 3
+                        s += ":%s:|" % ("-" * (len_m - 2))
                     print(s)
 
                     for i in intf:
-                        s = "|{:10}|".format(i)
+                        s = "|{:{len}}|".format(i, len=len_intf)
                         for m in mibs:
+                            len_m = len(m)
+                            if len_m < 3: len_m = 3
                             if i in r[m]:
                                 if len(r[m][i]) == 0:
                                     x = "0"     # MIB déclarée mais vide
@@ -904,7 +973,7 @@ table#t01 td:nth-child(1)	{
                                     x = "X"     # il y a des valeurs pour la MIB
                             else:
                                 x = ""
-                            s += "{:^10}|".format(x)
+                            s += "{:^{len}}|".format(x, len=len_m)
                         print(s)
 
 
@@ -1060,7 +1129,6 @@ table#t01 td:nth-child(1)	{
         # plutôt que de haut en bas
         dot.attr('graph', rankdir="LR")
 
-
         ##
         # @brief fonction récursive de création du graphe de topologie
         #
@@ -1096,7 +1164,7 @@ table#t01 td:nth-child(1)	{
                         continue
                     label += r"%s: %s\n" % (i, str(v))
 
-            dot.node(key, label=label, color="black" if node['Active'] else "lightgrey" )
+            dot.node(key, label=label, color="black" if node['Active'] else "lightgrey")
 
             if 'Children' in node:
                 for j in node['Children']:
