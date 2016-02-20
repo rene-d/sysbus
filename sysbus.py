@@ -883,28 +883,30 @@ table#t01 td:nth-child(1)	{
 
 
                 else:
-                    s = "|{:15}|".format("Intf")
-                    sep = "+" + "-"*15 + "+"
+
+                    s = "| {:15} |".format("Intf")
                     for m in mibs:
-                        s += "{:^10}|".format(m)
-                        sep += "-" * 10 + "+"
-                    print()
-                    print(sep)
+                        s += ' {:15} |'.format(m)
                     print(s)
-                    print(sep)
+
+                    s = "| :%s |" % ("-" * 14)
+                    for m in mibs:
+                        s += " :%s: |" % ("-" * 13)
+                    print(s)
+
                     for i in intf:
-                        s = "|{:15}|".format(i)
+                        s = "|{:10}|".format(i)
                         for m in mibs:
-                            x = ""
                             if i in r[m]:
                                 if len(r[m][i]) == 0:
                                     x = "0"     # MIB déclarée mais vide
                                 else:
                                     x = "X"     # il y a des valeurs pour la MIB
+                            else:
+                                x = ""
                             s += "{:^10}|".format(x)
                         print(s)
-                    print(sep)
- 
+
 
             elif args[0] == "dump":
 

@@ -163,7 +163,7 @@ L'interprétation du résultat de cette requête est :
 - cette MIB décrit le graphe, `wl1` étant connecté par un lien _upper_ à l'interface `bridge` et par un lien _lower_ à `wifi1_ath`
 - l'interface est activée (`Status`)
 
-La commande est également capable d'établir un tableau croisé entre MIBs et interface pour en trouver l'usage. Cf. ce [résultat](docs/MIBs.html) où X=utilisée, 0=référencée mais vide.
+La commande est également capable d'établir un tableau croisé entre MIBs et interface pour en trouver l'usage. Cf. ce [résultat](docs/MIBs.md) où X=utilisée, 0=référencée mais vide.
 
     $ ./sysbus.py -MIBs table [html]
 
