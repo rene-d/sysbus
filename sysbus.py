@@ -789,7 +789,7 @@ def add_commands(parser):
                         intf.add(i)
 
                 mibs = set()
-                r = requete('sysbus.NeMo.Intf.lo:getMIBs', { "traverse": "this" })
+                r = requete('NeMo.Intf.lo:getMIBs', { "traverse": "this" })
                 if not r is None:
                     for i in r['status']:
                         mibs.add(i)
@@ -798,6 +798,113 @@ def add_commands(parser):
                 print("MIBs (%d): %s" % (len(mibs), str(sorted(mibs))))
                 print()
                 print("Intf (%d): %s" % (len(intf), str(sorted(intf))))
+
+            elif args[0] == "table":
+                intf = set()
+                mibs = set()
+
+                r = requete("NeMo.Intf.lo:getMIBs", { "traverse": "all" })
+                if r is None: return
+
+                r = r['status']
+
+                for m in r:
+                    mibs.add(m)
+                    for i in r[m]:
+                        intf.add(i)
+
+                mibs = sorted(mibs)
+                intf = sorted(intf)
+
+                #print("MIBs (%d): %s" % (len(mibs), str(mibs)))
+                #print("Intf (%d): %s" % (len(intf), str(intf)))
+
+                if len(args) >= 2 and args[1] == "html":
+
+                    print(
+'''<!DOCTYPE html>
+<html>
+<head>
+<style>
+table {
+    width:100%;
+}
+table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+th, td {
+    padding: 5px;
+    text-align: center;
+    white-space: nowrap;
+}
+table#t01 tr:nth-child(even) {
+    background-color: #eee;
+}
+table#t01 tr:nth-child(odd) {
+   background-color:#fff;
+}
+table#t01 th	{
+    background-color: black;
+    color: white;
+}
+table#t01 td:nth-child(1)	{
+    text-color: blue;
+    color: blue;
+    text-align: left;
+}
+</style>
+</head>
+<body>
+''')
+
+                    print('<table id="t01">')
+                    print('  <tr>')
+                    print('    <th>%s</th>' % 'Intf')
+                    for m in mibs:
+                        print('    <th>%s</th>' % m)
+                    print('  </tr>')
+                    for i in intf:
+                        print('  <tr>')
+                        print('    <td>%s</td>' % i)
+                        for m in mibs:
+                            x = ""
+                            if i in r[m]:
+                                if len(r[m][i]) == 0:
+                                    x = "0"     # MIB déclarée mais vide
+                                else:
+                                    x = "X"     # il y a des valeurs pour la MIB
+                            print('    <td>%s</td>' % x)
+                        print('  </tr>')
+                    print('  </table>')
+
+                    print('</body>')
+                    print('</html>')
+
+
+                else:
+                    s = "|{:15}|".format("Intf")
+                    sep = "+" + "-"*15 + "+"
+                    for m in mibs:
+                        s += "{:^10}|".format(m)
+                        sep += "-" * 10 + "+"
+                    print()
+                    print(sep)
+                    print(s)
+                    print(sep)
+                    for i in intf:
+                        s = "|{:15}|".format(i)
+                        for m in mibs:
+                            x = ""
+                            if i in r[m]:
+                                if len(r[m][i]) == 0:
+                                    x = "0"     # MIB déclarée mais vide
+                                else:
+                                    x = "X"     # il y a des valeurs pour la MIB
+                            s += "{:^10}|".format(x)
+                        print(s)
+                    print(sep)
+ 
 
             elif args[0] == "dump":
 
@@ -881,6 +988,13 @@ def add_commands(parser):
         # charge graphviz
         Digraph = load_graphviz()
 
+        view = True
+        for i in args:
+            if i == "noview":
+                view = False
+                args.remove(i)
+                break
+
         if len(args) > 0:
             if len(args) >= 2:
                 r = requete('NeMo.Intf.%s:getMIBs' % args[0], { "traverse":args[1], "mibs":"base" })
@@ -911,7 +1025,7 @@ def add_commands(parser):
             for j in v['LLIntf']:
                 dot.edge(i, j)
 
-        dot.render(filename="nemo_intf.gv", view=True)
+        dot.render(filename="nemo_intf.gv", view=view)
 
 
     ##
@@ -924,6 +1038,13 @@ def add_commands(parser):
 
         # charge graphviz
         Digraph = load_graphviz()
+
+        view = True
+        for i in args:
+            if i == "noview":
+                view = False
+                args.remove(i)
+                break
 
         r = requete("Devices.Device.HGW:topology")
         if r is None or not 'status' in r: return
@@ -983,7 +1104,10 @@ def add_commands(parser):
         for i in r:
             traverse(i)
 
-        dot.render(filename="devices.gv", view=True)
+        if simpleTopo:
+            dot.render(filename="devices-simple.gv", view=view)
+        else:
+            dot.render(filename="devices.gv", view=view)
 
 
 
@@ -1079,6 +1203,7 @@ def main():
 
     parser.add_argument('-noauth', help="ne s'authentifie pas avant les requêtes", action='store_true', default=False)
     parser.add_argument('-raw', help="", action='store_true', default=False)
+    parser.add_argument('-out', help="fichier de sortie")
 
     add_singles(parser)
     add_commands(parser)
@@ -1099,6 +1224,10 @@ def main():
         USER_LIVEBOX = args.user
     if args.password:
         PASSWORD_LIVEBOX = args.password
+
+    if args.out:
+        debug(2, "redirect to", args.out)
+        sys.stdout = open(args.out, "w")
 
     if args.run:
         a = args.parameters

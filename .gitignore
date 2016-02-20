@@ -1,7 +1,4 @@
-nemo_intf.gv
-nemo_intf.gv.svg
-devices.gv
-devices.gv.svg
+/dump/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
