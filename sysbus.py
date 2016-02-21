@@ -248,7 +248,7 @@ def requete(chemin, args=None, get=False, raw=False, silent=False):
         if args is None:
             c += "?_restDepth=-1"
         else:
-            c += "?_restDepth="  + args
+            c += "?_restDepth="  + str(args)
 
         debug(1, "requête: %s" % (c))
         t = session.get(URL_LIVEBOX + c, headers=sah_headers)
@@ -686,9 +686,9 @@ def add_commands(parser):
         if len(args) > 0:
             for i in range(0, len(args)):
                 for host in r['status']:
-                    if host['physAddress'] == args[i]:
+                    if host['physAddress'].lower() == args[i].lower():
                         pprint.pprint(host)
-                    elif host['clientID'] == args[i]:
+                    elif host['clientID'].lower() == args[i].lower():
                         pprint.pprint(host)
                     elif host['ipAddress'] == args[i]:
                         pprint.pprint(host)
@@ -713,12 +713,38 @@ def add_commands(parser):
             if a == "-": continue
             print("%4s %-32s %-5s %-16s %s" % (i['Index'], i['Name'], i['Active'], b, a))
 
+
+    def object_cmd(args):
+        if len(args) >= 1:
+            a = [ args[0], 0 ]
+            model_cmd(a)
+        else:
+            error("Usage...")
+
     #
     def model_cmd(args):
-        """ interroge le datamodel de la Livebox: -model [ raw | depth ] """
+        """ interroge le datamodel de la Livebox: -model [ raw ] [ path [ depth ] ] """
 
-        if len(args) == 1 and args[0] == "raw":
-            r = requete('sysbus', get=True, raw=True)
+        if len(args) >= 1 and args[0] == "raw":
+            raw = True
+            del args[0]
+        else:
+            raw = False
+
+        chemin = 'sysbus'
+        prof = None
+        if len(args)  >= 1:
+            if args[0].startswith("sysbus"):
+                chemin = args[0]
+            else:
+                chemin += '.' + args[0]
+
+        if len(args) >= 2:
+            prof = args[1]
+
+        r = requete(chemin, prof, get=True, raw=raw)
+
+        if raw:
             if not r is None:
                 with open("model.json", "wb") as f:
                     f.write(r)
@@ -728,22 +754,12 @@ def add_commands(parser):
                 error("modèle non accessible")
 
         else:
-            chemin = 'sysbus'
-            if len(args)  >= 1:
-                chemin += '.' + args[0]
-
-            if len(args) >= 2:
-                r = requete(chemin, args[1], get=True)
-            else:
-                r = requete(chemin, get=True)
-
             #pprint.pprint(r)
             #print(json.dumps(r))
             #print(type(r))
             if not r is None:
                 for i in r:
                     model(i)
-
 
     #
     def MIBs_cmd(args):

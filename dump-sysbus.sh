@@ -46,7 +46,7 @@ progress 280   sysbus -version -out status.txt
 progress 470   sysbus -info -out info.txt
 progress 420   sysbus -hosts -out hosts.txt
 progress 8500  sysbus -model -out model.txt
-progress 6930  sysbus -model raw -out /dev/null
+progress 9500  sysbus -model raw -out /dev/null
 progress 870   sysbus -graph noview
 progress 590   sysbus -topo simple noview
 progress 590   sysbus -topo noview
