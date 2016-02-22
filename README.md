@@ -124,7 +124,9 @@ Pour cela, la requête HTTP à faire est un GET sur le nom de l'objet. Le JSON r
     parameter:  Status               : bool       = 'True'
     parameter:  ConfigurationMode    : bool       = 'True'
 
-Lancé sans nom d'objet, `sysbus.py` affiche le datamodel entier, aux restrictions d'accès près. Cependant des sous-objets peuvent être accessibles, comme NeMo.Intf.data alors que ni NeMo ni NeMo.Intf ne sont accessibles.
+Lancé sans nom d'objet, le programme affiche le datamodel entier, aux restrictions d'accès près. Cependant des sous-objets peuvent être accessibles, comme NeMo.Intf.data alors que ni NeMo ni NeMo.Intf ne sont accessibles. Il y a également les objets NeMo.MIB.*nom* (NeMo.MIB.alias par exemple), mais accès interdit.
+
+Un script utilitaire, `model.py`, va utiliser le fichier model.json généré par `sysbus.py -model raw` pour créer des diagrammes de classes avec [plantuml](http://plantuml.com).
 
 ## Le graphe NeMo.Intf
 

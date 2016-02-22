@@ -3,7 +3,7 @@
 import json
 import os
 import sys
-
+import shutil
 
 
 class uml_model:
@@ -21,7 +21,7 @@ class uml_model:
 
     def _build_node(self, node, level=0):
 
-        name = node['objectInfo']['name']
+        name = node['objectInfo']['key']
         if name == "": name = "sysbus"
 
         path = node['objectInfo']['keyPath'] + "." + name
@@ -38,8 +38,8 @@ class uml_model:
                     for j in i['attributes']:
                         if i['attributes'] == False: continue
                         if j == "read_only": access = "#"
-                        elif j == "persistent": access = "~"
-                        elif j == "volatile": access = "-"
+                        elif j == "persistent": pass
+                        elif j == "volatile": pass
                         else:
                             print("attribut inconnu:", j, i)
                             sys.exit(2)
@@ -55,6 +55,7 @@ class uml_model:
                     for j in i['attributes']:
                         if i['attributes'] == False: continue
                         if j == "message": access = "~"
+                        elif j == "variadic": pass
                         else:
                             print("attribut inconnu:", j, i)
                             sys.exit(2)
@@ -89,10 +90,10 @@ class uml_model:
         # analyse les children du noeud courant
         for child in node['children']:
             o = child['objectInfo']
-            assert(o['indexPath'] == o['keyPath'])
+            #assert(o['indexPath'] == o['keyPath'])
             assert(o['state'] == "ready")
            
-            name = o['name']
+            name = o['key']
             path = o['keyPath'] + "." + name
 
             # crée le noeud child
@@ -130,27 +131,33 @@ def main():
     model = json.load(open("model.json"))
 
     # est-on à la racine du modèle ?
-    if model['objectInfo']['indexPath'] == "" and model['objectInfo']['name'] == "":
+    if model['objectInfo']['keyPath'] == "" and model['objectInfo']['key'] == "":
 
         # on crée des diagrammes par top-level objects, sinon c'est trop gros
         for node in model['children']:
-            name = node['objectInfo']['name']
+            name = node['objectInfo']['key']
             plant = "models/%s.plantuml" % name
 
             print("génération diagramme %s" % name)
             uml_model(node, plant)
             plants.append(plant)
 
+        for error in model['errors']:
+            if error['error'] == 13:
+                name = error['info']
+                print("accès interdit: %s" % name)
+
     else:
         print("génération diagramme")
         uml_model(model, "model.plantuml")
         plants.append('model.plantuml')
 
-    if os.path.exists("plantuml.jar"):
+    if shutil.which("plantuml"):
         print("lancement plantuml")
-        os.system("java -jar plantuml.jar -tsvg " + ' '.join(plants))
+        os.system("plantuml -tsvg " + ' '.join(plants))
     else:
         print("plantuml est nécessaire, vous pouvez le télécharger ici:")
+        print("  OSX: brew install plantuml")
         print("  http://sourceforge.net/projects/plantuml/files/plantuml.jar/download")
         return
 
