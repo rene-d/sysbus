@@ -128,6 +128,10 @@ Lancé sans nom d'objet, le programme affiche le datamodel entier, aux restricti
 
 Un script utilitaire, `model.py`, va utiliser le fichier model.json généré par `sysbus.py -model raw` pour créer des diagrammes de classes avec [plantuml](http://plantuml.com).
 
+Le datamodel reprend certains éléments de différents TR du Broadband Forum (cf. [TR-181](https://www.broadband-forum.org/cwmp/tr-181-2-10-0.html) par exemple). Par exemple, l'objet Device.Hosts est très similaire à celui qu'on trouve dans la Livebox, plus des extensions spécifiques à Orange (X_ORANGE-COM_xxx).
+
+Par ailleurs, la présence d'un utilisateur 'cwmpd' (cf. l'objet UserManagement) au mot de passe inconnu tend à prouver que la Livebox communique en utilisant _CWMP_ (ou [TR-069](https://fr.wikipedia.org/wiki/TR-069)) avec sa gateway de management côté Orange.
+
 ## Le graphe NeMo.Intf
 
 Les interfaces et pseudo-interfaces sont organisées en interne en graphe via des connexions _upper_ et _lower_.
@@ -188,6 +192,3 @@ On y voit également les ports USB et l'UPnP.
     $ ./sysbus.py -topo simple
 
 ![topologie réseau](docs/devices.png)
-```
-
-
