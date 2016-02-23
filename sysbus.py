@@ -158,14 +158,14 @@ def state_file():
 #  - envoie la requête d'authentification
 #
 # @return True/False
-def auth():
+def auth(new_session=False):
     global session, sah_headers
 
     debug(3, 'state file', state_file())
 
     for i in range(2):
 
-        if os.path.exists(state_file()):
+        if not new_session and os.path.exists(state_file()):
             debug(1, 'loading saved cookies')
 
             with open(state_file(), 'rb') as f:
@@ -1303,13 +1303,16 @@ def main():
     verbosity = args.verbose
     load_conf()
 
+    new_session = False
     if args.url:
         URL_LIVEBOX = args.url
         if URL_LIVEBOX[-1] != "/": URL_LIVEBOX += "/"
     if args.user:
         USER_LIVEBOX = args.user
+        new_session = True
     if args.password:
         PASSWORD_LIVEBOX = args.password
+        new_session = True
 
     if args.out:
         debug(2, "redirect to", args.out)
@@ -1325,7 +1328,7 @@ def main():
         if args.noauth: 
             noauth()
         else:
-            if not auth():
+            if not auth(new_session):
                 sys.exit(1)
 
         if args.run_auth:
