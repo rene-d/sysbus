@@ -132,6 +132,8 @@ Le datamodel reprend certains éléments de différents TR du Broadband Forum (c
 
 Par ailleurs, la présence d'un utilisateur 'cwmpd' (cf. l'objet UserManagement) au mot de passe inconnu tend à prouver que la Livebox communique en utilisant _CWMP_ (ou [TR-069](https://fr.wikipedia.org/wiki/TR-069)) avec sa gateway de management côté Orange.
 
+![diagramme de classe Hosts](docs/Hosts.png)
+
 ## Le graphe NeMo.Intf
 
 Les interfaces et pseudo-interfaces sont organisées en interne en graphe via des connexions _upper_ et _lower_.
