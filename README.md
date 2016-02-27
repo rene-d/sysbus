@@ -126,7 +126,7 @@ Pour cela, la requête HTTP à faire est un GET sur le nom de l'objet. Le JSON r
 
 Lancé sans nom d'objet, le programme affiche le datamodel entier, aux restrictions d'accès près. Cependant des sous-objets peuvent être accessibles, comme NeMo.Intf.data alors que ni NeMo ni NeMo.Intf ne sont accessibles. Il y a également les objets NeMo.MIB.*nom* (NeMo.MIB.alias par exemple), mais accès interdit.
 
-Un script utilitaire, `model.py`, va utiliser le fichier model.json généré par `sysbus.py -model raw` pour créer des diagrammes de classes avec [plantuml](http://plantuml.com).
+L'option `-modeluml` va créer les diagrammes de classes avec [plantuml](http://plantuml.com) (voir exemple ci-dessous).
 
 Le datamodel reprend certains éléments de différents TR du Broadband Forum (cf. [TR-181](https://www.broadband-forum.org/cwmp/tr-181-2-10-0.html) par exemple). Par exemple, l'objet Device.Hosts est très similaire à celui qu'on trouve dans la Livebox, plus des extensions spécifiques à Orange (X_ORANGE-COM_xxx).
 

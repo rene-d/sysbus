@@ -6,6 +6,7 @@
 
 import sys
 import os
+import shutil
 import re
 import argparse
 import pickle
@@ -17,6 +18,7 @@ import tempfile
 import configparser
 import datetime
 import html
+import subprocess
 
 
 ##
@@ -238,7 +240,7 @@ def noauth():
 def requete(chemin, args=None, get=False, raw=False, silent=False):
 
     # nettoie le chemin de la requête
-    c = str.replace(chemin, ".", "/")
+    c = str.replace(chemin or "sysbus", ".", "/")
     if c[0] == "/":
         c = c[1:]
     if c[0:7] != "sysbus/":
@@ -333,10 +335,7 @@ def requete_print(chemin, args=None, get=False):
 # @param level
 #
 # @return 
-def model(node, level=0, file=sys.stdout):
-
-    #...
-    print = functools.partial(error, file=file)
+def model(node, level=0):
 
     def print_functions(node, indent=''):
         for f in node["functions"]:
@@ -413,7 +412,7 @@ def model(node, level=0, file=sys.stdout):
             print("-->", i, len(node[i]))
 
     for c in node['children']:
-        model(c, level + 1, file=file)
+        model(c, level + 1)
 
 
 
@@ -532,6 +531,462 @@ def load_graphviz():
         error("Installez https://github.com/xflr6/graphviz : pip3 install graphviz")
         sys.exit(2)
     return dg
+
+
+
+##
+# @brief dumpe dans un fichier le datamodel, à partir d'un noeud ou depuis la racine
+#
+# @param chemin
+# @param prof
+# @param out
+#
+# @return 
+def model_raw_cmd(chemin, prof=None, out=None):
+
+    r = requete(chemin, prof, get=True, raw=True)
+
+    if not r is None:
+        with open(out or "model.json", "wb") as f:
+            f.write(r)
+            f.close()
+        debug(1, "modèle écrit dans", out or "model.json")
+    else:
+        error("modèle non accessible")
+
+
+
+##
+# @brief crée un diagramme de classe UML avec plantuml
+#
+class uml_model:
+
+    def __init__(self, model, filename):
+
+        self.uml = open(filename, "w")
+        self.uml.write("@startuml\n")
+
+        self._build_node(model)
+
+        self.uml.write("@enduml\n")
+        self.uml.close()
+
+
+    def _build_node(self, node, level=0):
+
+        name = node['objectInfo']['key']
+        if name == "": name = "sysbus"
+
+        path = node['objectInfo']['keyPath'] + "." + name
+        if path[0] == ".": path = path[1:]
+
+        self.uml.write('class "%s" as %s {\n' % (name, path))
+
+        # analyse les paramètres du noeud
+        if 'parameters' in node:
+            for i in node['parameters']:
+
+                access = ""
+                if 'attributes' in i:
+                    for j in i['attributes']:
+                        if i['attributes'] == False: continue
+                        if j == "read_only": access = "#"
+                        elif j == "persistent": pass
+                        elif j == "volatile": pass
+                        else:
+                            print("attribut inconnu:", j, i)
+                            sys.exit(2)
+
+                self.uml.write('  %s%s %s\n' % (access, i['type'], i['name']))
+
+        # analyse les fonctions du noeud
+        if 'functions' in node:
+            for i in node['functions']:
+
+                access = ""
+                if 'attributes' in i:
+                    for j in i['attributes']:
+                        if i['attributes'] == False: continue
+                        if j == "message": access = "~"
+                        elif j == "variadic": pass
+                        else:
+                            print("attribut inconnu:", j, i)
+                            sys.exit(2)
+
+                arguments = []
+                if 'arguments' in i:
+                    for j in i['arguments']:
+                        name = j['name']
+                        if 'attributes' in j:
+                            mandatory = False
+                            out = False
+                            for k, v in j['attributes'].items():
+                                if k == 'out': out = v
+                                elif k == 'mandatory': mandatory = v
+                                elif k == 'in': pass
+                                else:
+                                    print("attribut inconnu:", k, j)
+                                    sys.exit(2)
+                            if not mandatory and not out: name = "opt " + name
+                            if out: name = "out " + name
+                        arguments.append(name)
+
+                self.uml.write('  %s%s %s(%s)\n' % (access, i['type'], i['name'], ','.join(arguments)))
+
+        self.uml.write('}\n')
+
+        #print("%s%s" % ("    " * level, name))
+
+        parent_path = path
+        parent_name = name
+
+        # analyse les children du noeud courant
+        for child in node['children']:
+            o = child['objectInfo']
+            #assert(o['indexPath'] == o['keyPath'])
+            assert(o['state'] == "ready")
+           
+            name = o['key']
+            path = o['keyPath'] + "." + name
+
+            # crée le noeud child
+            self._build_node(child, level + 1)
+
+            # lie le child au noeud courant
+            self.uml.write('"%s" <-- "%s"\n' % (parent_path, path))
+
+        # cas particulier des children non autorisés
+        if 'errors' in node:
+            for error in node['errors']:
+                if error['error'] == 13:
+                    name = error['info']
+                    if name == "": name = "EMPTY"
+                    path = node['objectInfo']['keyPath'] + "." + name
+
+                    #print("%s%s *" % ("    " * (level + 1), name))
+
+                    self.uml.write('class "%s" as %s {\n' % (name, path))
+                    self.uml.write('}\n')
+                    self.uml.write('"%s" <-- "%s"\n' % (parent_path, path))
+
+
+##
+# @brief 
+#
+# @param filename
+#
+# @return 
+def open_file_in_os(filename):
+    if sys.platform.startswith('darwin'):
+        subprocess.call(['open', filename])
+    elif os.name == 'nt':
+        os.startfile(filename)
+    elif os.name == 'posix':
+        subprocess.call(['xdg-open', filename])
+
+
+##
+# @brief 
+#
+# @param chemin
+# @param prof
+# @param out
+#
+# @return 
+def model_uml_cmd(chemin, prof=None, out=None):
+
+    model = requete(chemin, prof, get=True, raw=True)
+    if not model:
+        return
+
+    model = model.decode('utf-8', errors='replace')
+    model = json.loads(model)
+
+    plants = []
+
+    fmt = os.path.splitext(out)[1][1:] if out else "svg"
+    file_to_open = None
+    debug(2, "format de sortie: %s" % fmt)
+
+    # est-on à la racine du modèle ?
+    if model['objectInfo']['keyPath'] == "" and model['objectInfo']['key'] == "":
+
+        if not os.path.isdir("models"):
+            debug(2, "créatoin répertoire: " % "models")
+            os.makedirs("models")
+
+        # on crée des diagrammes par top-level objects, sinon c'est trop gros
+        for node in model['children']:
+            name = node['objectInfo']['key']
+            plant = "models/%s.plantuml" % name
+
+            debug(1, "génération diagramme %s" % name)
+            uml_model(node, plant)
+            plants.append(plant)
+
+        for error in model['errors']:
+            if error['error'] == 13:
+                name = error['info']
+                debug(1, "accès interdit: %s" % name)
+
+    else:
+        s = os.path.splitext(out or "model")[0] + ".plantuml"
+
+        debug(1, "génération diagramme %s" % s)
+        uml_model(model, s)
+        plants.append(s)
+
+        file_to_open = out or "model." + fmt
+
+    if shutil.which("plantuml"):
+        debug(1, "lancement plantuml")
+        subprocess.call('plantuml -t' + fmt + ' ' + ' '.join(plants), shell=True)
+
+        if file_to_open:
+            open_file_in_os(file_to_open)
+
+    else:
+        print("plantuml est nécessaire, vous pouvez le télécharger ici:")
+        print("  OSX: brew install plantuml")
+        print("  Debian/Ubuntu: sudo apt-get install plantuml")
+        print("  autres: http://sourceforge.net/projects/plantuml/files/plantuml.jar/download")
+        print("Nota: Graphviz est également nécessaire")
+
+
+##
+# @brief crée un tableau croisé MIBs/Interfaces
+#
+# @param output_html
+#
+# @return 
+def MIBs_table_cmd(output_html=False):
+    intf = set()
+    mibs = set()
+
+    r = requete("NeMo.Intf.lo:getMIBs", { "traverse": "all" })
+    if r is None or not 'status' in r: return
+
+    r = r['status']
+
+    for m in r:
+        mibs.add(m)
+        for i in r[m]:
+            intf.add(i)
+
+    mibs = sorted(mibs)
+    intf = sorted(intf)
+
+    #print("MIBs (%d): %s" % (len(mibs), str(mibs)))
+    #print("Intf (%d): %s" % (len(intf), str(intf)))
+
+    if output_html:
+        # affichage dans une page HTML
+
+        print(
+'''<!DOCTYPE html>
+<html>
+<head>
+
+<style>
+table {
+    width:100%;
+}
+table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+th, td {
+    padding: 5px;
+    text-align: center;
+    white-space: nowrap;
+}
+table#t01 tr:nth-child(even) {
+    background-color: #eee;
+}
+table#t01 tr:nth-child(odd) {
+   background-color:#fff;
+}
+table#t01 th	{
+    background-color: black;
+    color: white;
+}
+table#t01 td:nth-child(1)	{
+    text-color: blue;
+    color: blue;
+    text-align: left;
+}
+.details {
+    white-space: pre;
+    font-family: monospace;
+    text-align: left;
+
+    border-color: darkblue;
+    border-width: 1px;
+    border-style: solid; 
+    position: absolute;
+    color: darkblue;
+    background-color: white;
+    z-index: 1;
+    display: none;
+}
+</style>
+
+<script>
+var last = null;
+function fenetre(nom) {
+    fenetre_close();
+    document.getElementById(nom).style.display="inline-block";
+    last = nom;
+}
+function fenetre_close() {
+    if (last) {
+        document.getElementById(last).style.display="none";
+        last = null;
+    }
+}
+</script>
+
+</head>
+<body>
+
+''')
+
+        print('<table id="t01">')
+
+        # la ligne d'entête
+        print('  <tr>')
+        print('    <th>%s</th>' % 'Intf')
+        for m in mibs:
+            print('    <th>%s</th>' % m)
+        print('  </tr>')
+
+        for i in intf:
+            print('  <tr>')
+
+            # la première colonne: le nom de l'interface
+            rr = requete("NeMo.Intf.%s:get" % i, silent=True)
+            action = 'fenetre_close()'
+            if not rr or 'status' not in rr:
+                x = '<div style="color:red;">' + i + '</div>'
+            else:
+                # cellule cliquable pour afficher les détails
+                details = html.escape(pprint.pformat(rr['status']))
+                x = '\n<div id="%s" class="details" onclick="fenetre_close()">' % (i)
+                x += details
+                x += '</div>\n'
+                x += '<div style="color:darkblue;">' + i + '</div>'
+                action = 'fenetre(\'%s\')' % (i)
+            print('    <td onclick="%s">%s</td>' % (action, x))
+
+            # les autres colonnes: les MIBs
+            for m in mibs:
+                action = 'fenetre_close()'
+                if i in r[m]:
+                    if len(r[m][i]) == 0:
+                        # MIB déclarée pour l'interface mais vide
+                        x = "0"     
+                    else:
+                        # il y a des valeurs pour la MIB
+                        # cellule cliquable pour afficher les détails
+                        x = '<div id="%s#%s" class="details" onclick="fenetre_close()">' % (i, m)
+                        x += html.escape(pprint.pformat(r[m][i]))
+                        x += '</div>'
+                        x += '<div style="color:darkblue;">X</div>'
+                        action = 'fenetre(\'%s#%s\')' % (i, m)
+                else:
+                    # MIB absente pour l'interface
+                    x = ""
+                print('    <td onclick="%s">%s</td>' % (action, x))
+            
+            print('  </tr>')
+        print('  </table>')
+
+        print('</body>')
+        print('</html>')
+
+    else:
+        # affichage en markdown/texte
+
+        len_intf = 0
+        for i in intf:
+            if len_intf < len(i): len_intf = len(i)
+
+        s = "|{:{len}}|".format("Intf", len=len_intf)
+        for m in mibs:
+            len_m = len(m)
+            if len_m < 3: len_m = 3
+            s += '{:^{len}}|'.format(m, len=len_m)
+        print(s)
+
+        s = "|:%s|" % ("-" * (len_intf - 1))
+        for m in mibs:
+            len_m = len(m)
+            if len_m < 3: len_m = 3
+            s += ":%s:|" % ("-" * (len_m - 2))
+        print(s)
+
+        for i in intf:
+            s = "|{:{len}}|".format(i, len=len_intf)
+            for m in mibs:
+                len_m = len(m)
+                if len_m < 3: len_m = 3
+                if i in r[m]:
+                    if len(r[m][i]) == 0:
+                        # MIB déclarée pour l'interface mais vide
+                        x = "0"     
+                    else:
+                        # il y a des valeurs pour la MIB
+                        x = "X"     
+                else:
+                    # MIB absente pour l'interface
+                    x = ""
+                s += "{:^{len}}|".format(x, len=len_m)
+            print(s)
+
+        pass
+
+
+##
+# @brief dumpe toutes les MIBs dans un sous-répertoire mibs au format pretty print Python et décodé
+#
+# @return 
+def MIBs_save_cmd():
+    # liste toutes les interfaces
+    intf = set()
+    r = requete("NeMo.Intf.lo:getIntfs", { "traverse": "all" })
+    if not r is None:
+        for i in r['status']:
+            intf.add(i)
+
+    if not os.path.isdir("mibs"):
+        os.makedirs("mibs")
+
+    # dump les datamodels de chaque interface
+    for i in intf:
+        r = requete('sysbus.NeMo.Intf.' + i, get=True)
+        if r is None: continue
+
+        # le modèle en json
+        with open("mibs/" + i + ".dict", "w") as f:
+            pprint.pprint(r, stream=f)
+            #json.dump(r, f, indent=4, separators=(',', ': '))
+            f.close()
+
+        # le modèle décodé
+        with open("mibs/" + i + ".model", "w") as f:
+            for j in r:
+                print("---------------------------------------------------------", file=f)
+                model(j, file=f)
+            f.close()
+
+    # dump le contenu des MIBs par interface
+    for i in intf:
+        r = requete('sysbus.NeMo.Intf.' + i + ':getMIBs', { "traverse": "this" })
+        if r is None: continue
+        with open("mibs/" + i + ".mib", "w") as f:
+            pprint.pprint(r, stream=f)
+            f.close()
+
 
 
 ##
@@ -714,22 +1169,10 @@ def add_commands(parser):
             print("%4s %-32s %-5s %-16s %s" % (i['Index'], i['Name'], i['Active'], b, a))
 
 
-    def object_cmd(args):
-        if len(args) >= 1:
-            a = [ args[0], 0 ]
-            model_cmd(a)
-        else:
-            error("Usage...")
 
     #
     def model_cmd(args):
-        """ interroge le datamodel de la Livebox: -model [ raw ] [ path [ depth ] ] """
-
-        if len(args) >= 1 and args[0] == "raw":
-            raw = True
-            del args[0]
-        else:
-            raw = False
+        """ interroge le datamodel de la Livebox: -model [ path [ depth ] ] """
 
         chemin = 'sysbus'
         prof = None
@@ -742,24 +1185,24 @@ def add_commands(parser):
         if len(args) >= 2:
             prof = args[1]
 
-        r = requete(chemin, prof, get=True, raw=raw)
+        r = requete(chemin, prof, get=True)
 
-        if raw:
-            if not r is None:
-                with open("model.json", "wb") as f:
-                    f.write(r)
-                    f.close()
-                print("modèle écrit dans model.json")
-            else:
-                error("modèle non accessible")
+        #pprint.pprint(r)
+        #print(json.dumps(r))
+        #print(type(r))
+        if not r is None:
+            for i in r:
+                model(i)
 
+
+    def object_cmd(args):
+        """ affiche l'objet sans descendre dans le datamodel """
+        if len(args) >= 1:
+            a = [ args[0], 0 ]
+            model_cmd(a)
         else:
-            #pprint.pprint(r)
-            #print(json.dumps(r))
-            #print(type(r))
-            if not r is None:
-                for i in r:
-                    model(i)
+            error("Usage...")
+
 
     #
     def MIBs_cmd(args):
@@ -790,7 +1233,6 @@ def add_commands(parser):
   Example: the parameter spec "ReqOption.3.Value" refers to the parameter Value held by the object NeMo.Intf.{i}.ReqOption.3.    
         '''
 
-
         if len(args) == 0:
 
             # récupère toutes les MIBs de toutes les interfaces
@@ -819,226 +1261,21 @@ def add_commands(parser):
                 print("Intf (%d): %s" % (len(intf), str(sorted(intf))))
 
             elif args[0] == "table":
-                intf = set()
-                mibs = set()
-
-                r = requete("NeMo.Intf.lo:getMIBs", { "traverse": "all" })
-                if r is None: return
-
-                r = r['status']
-
-                for m in r:
-                    mibs.add(m)
-                    for i in r[m]:
-                        intf.add(i)
-
-                mibs = sorted(mibs)
-                intf = sorted(intf)
-
-                #print("MIBs (%d): %s" % (len(mibs), str(mibs)))
-                #print("Intf (%d): %s" % (len(intf), str(intf)))
-
-                if len(args) >= 2 and args[1] == "html":
-
-                    print(
-'''<!DOCTYPE html>
-<html>
-<head>
-
-<style>
-table {
-    width:100%;
-}
-table, th, td {
-    border: 1px solid black;
-    border-collapse: collapse;
-}
-th, td {
-    padding: 5px;
-    text-align: center;
-    white-space: nowrap;
-}
-table#t01 tr:nth-child(even) {
-    background-color: #eee;
-}
-table#t01 tr:nth-child(odd) {
-   background-color:#fff;
-}
-table#t01 th	{
-    background-color: black;
-    color: white;
-}
-table#t01 td:nth-child(1)	{
-    text-color: blue;
-    color: blue;
-    text-align: left;
-}
-
-.details {
-    white-space: pre;
-    font-family: monospace;
-    text-align: left;
-
-    border-color: darkblue;
-    border-width: 1px;
-    border-style: solid; 
-    position: absolute;
-    color: darkblue;
-    background-color: white;
-    z-index: 1;
-    display: none;
-}
-</style>
-
-<script>
-var last = null;
-function fenetre(nom, x) {
-    if (last) {
-        document.getElementById(last).style.display="none";
-    }
-    if (x) {
-        document.getElementById(nom).style.display="inline-block";
-        last = nom;
-    } else {
-        document.getElementById(nom).style.display="none";
-    }
-}
-</script>
-
-</head>
-<body>
-
-''')
-
-                    print('<table id="t01">')
-
-                    # la ligne d'entête
-                    print('  <tr>')
-                    print('    <th>%s</th>' % 'Intf')
-                    for m in mibs:
-                        print('    <th>%s</th>' % m)
-                    print('  </tr>')
-
-                    for i in intf:
-                        print('  <tr>')
-
-                        # la première colonne
-                        rr = requete("NeMo.Intf.%s:get" % i, silent=True)
-                        if not rr or 'status' not in rr:
-                            x = '<div style="color:red;">' + i + '</div>'
-                        else:
-                            details = html.escape(pprint.pformat(rr['status']))
-                            x = '\n<div id="%s" class="details" onclick="fenetre(\'%s\', 0)">' % (i, i)
-                            x += details
-                            x += '</div>\n'
-                            x += '<a onclick="fenetre(\'%s\', 1)">%s</a>' % (i, i)
-                        print('    <td>%s</td>' % x)
-
-                        for m in mibs:
-                            x = ""
-                            if i in r[m]:
-                                if len(r[m][i]) == 0:
-                                    x = "0"     # MIB déclarée mais vide
-                                else:
-                                    #x = "X"     # il y a des valeurs pour la MIB
-
-                                    x = '<div id="%s#%s" class="details" onclick="fenetre(\'%s#%s\', 0)">' % (i, m, i, m)
-                                    x += html.escape(pprint.pformat(r[m][i]))
-                                    x += '</div>'
-                                    x += '<div style="color:darkblue;">'
-                                    x += '<a onclick="fenetre(\'%s#%s\', 1)">X</a>' % (i, m)
-                                    x += '</div>'
-
-                            print('    <td>%s</td>' % x)
-                        print('  </tr>')
-                    print('  </table>')
-
-                    print('</body>')
-                    print('</html>')
-
-
-                else:
-
-                    len_intf = 0
-                    for i in intf:
-                        if len_intf < len(i): len_intf = len(i)
-
-                    s = "|{:{len}}|".format("Intf", len=len_intf)
-                    for m in mibs:
-                        len_m = len(m)
-                        if len_m < 3: len_m = 3
-                        s += '{:^{len}}|'.format(m, len=len_m)
-                    print(s)
-
-                    s = "|:%s|" % ("-" * (len_intf - 1))
-                    for m in mibs:
-                        len_m = len(m)
-                        if len_m < 3: len_m = 3
-                        s += ":%s:|" % ("-" * (len_m - 2))
-                    print(s)
-
-                    for i in intf:
-                        s = "|{:{len}}|".format(i, len=len_intf)
-                        for m in mibs:
-                            len_m = len(m)
-                            if len_m < 3: len_m = 3
-                            if i in r[m]:
-                                if len(r[m][i]) == 0:
-                                    x = "0"     # MIB déclarée mais vide
-                                else:
-                                    x = "X"     # il y a des valeurs pour la MIB
-                            else:
-                                x = ""
-                            s += "{:^{len}}|".format(x, len=len_m)
-                        print(s)
-
+                html = (len(args) >= 2 and args[1] == "html")
+                MIBs_table_cmd(html)
 
             elif args[0] == "dump":
+                MIBs_save_cmd()
 
-                # liste toutes les interfaces
-                intf = set()
-                r = requete("NeMo.Intf.lo:getIntfs", { "traverse": "all" })
-                if not r is None:
-                    for i in r['status']:
-                        intf.add(i)
 
-                if not os.path.isdir("mibs"):
-                    os.makedirs("mibs")
-
-                # dump les datamodels de chaque interface
-                for i in intf:
-                    r = requete('sysbus.NeMo.Intf.' + i, get=True)
-                    if r is None: continue
-
-                    # le modèle en json
-                    with open("mibs/" + i + ".dict", "w") as f:
-                        pprint.pprint(r, stream=f)
-                        #json.dump(r, f, indent=4, separators=(',', ': '))
-                        f.close()
-
-                    # le modèle décodé
-                    with open("mibs/" + i + ".model", "w") as f:
-                        for j in r:
-                            print("---------------------------------------------------------", file=f)
-                            model(j, file=f)
-                        f.close()
-
-                # dump le contenu des MIBs par interface
-                for i in intf:
-                    r = requete('sysbus.NeMo.Intf.' + i + ':getMIBs', { "traverse": "this" })
-                    if r is None: continue
-                    with open("mibs/" + i + ".mib", "w") as f:
-                        pprint.pprint(r, stream=f)
-                        f.close()
-
-            # sauve toutes les MIBs de toutes les interfaces dans un fichier
-            elif args[0] == "save":
-                r = requete('sysbus.NeMo.Intf.data:getMIBs', { "traverse": "all" })
-                if r is None: return
-                with open("MIBs_all", "w") as f:
-                    pprint.pprint(r, stream=f)
-                    f.close()
-                print("MIBs écrites dans MIBs_all")
+#            # sauve toutes les MIBs de toutes les interfaces dans un fichier
+#            elif args[0] == "save":
+#                r = requete('sysbus.NeMo.Intf.data:getMIBs', { "traverse": "all" })
+#                if r is None: return
+#                with open("MIBs_all", "w") as f:
+#                    pprint.pprint(r, stream=f)
+#                    f.close()
+#                print("MIBs écrites dans MIBs_all")
 
             else:
                 if len(args) > 1:
@@ -1196,7 +1433,6 @@ function fenetre(nom, x) {
             dot.render(filename="devices.gv", view=view)
 
 
-
     ################################################################################
 
 
@@ -1271,6 +1507,7 @@ def main():
 
     parser.add_argument("-v", "--verbose", action="count", default=verbosity)
 
+    # options "commandes"
     parser.add_argument('-scan', help="analyse les requêtes sysbus dans scripts.js",
             dest='run', action='store_const',
             const=scan_sysbus)
@@ -1279,25 +1516,33 @@ def main():
             dest='run', action='store_const',
             const=extract_files)
 
+    # gestion de l'authentification
     parser.add_argument('-url', help="url de la Livebox")
     parser.add_argument('-user', help="user de la Livebox")
     parser.add_argument('-password', help="password de la Livebox")
 
+    # mémorise et affiche la conf
     parser.add_argument('-config', help="écrit la configuration dans ~/.sysbusrc",
             dest='run', action='store_const',
             const=write_conf)
 
     parser.add_argument('-noauth', help="ne s'authentifie pas avant les requêtes", action='store_true', default=False)
+
+    # modifications du comportement des commandes
     parser.add_argument('-raw', help="", action='store_true', default=False)
     parser.add_argument('-out', help="fichier de sortie")
 
+    # les commandes "requêtes"
     add_singles(parser)
     add_commands(parser)
+    parser.add_argument('-modelraw', help="", action='store_true', default=False)
+    parser.add_argument('-modeluml', help="", action='store_true', default=False)
 
     # ajout des arguments génériques (chemin de la commande et paramètres)
     parser.add_argument('sysbus', help="requête", nargs='?')
     parser.add_argument('parameters', help="paramètres", nargs='*')
 
+    # analyse la ligne de commandes
     args = parser.parse_args()
 
     verbosity = args.verbose
@@ -1309,14 +1554,11 @@ def main():
         if URL_LIVEBOX[-1] != "/": URL_LIVEBOX += "/"
     if args.user:
         USER_LIVEBOX = args.user
-        new_session = True
+        new_session = True          # ne charge pas le fichier des cookies
     if args.password:
         PASSWORD_LIVEBOX = args.password
-        new_session = True
+        new_session = True          # ne charge pas le fichier des cookies
 
-    if args.out:
-        debug(2, "redirect to", args.out)
-        sys.stdout = open(args.out, "w")
 
     if args.run:
         a = args.parameters
@@ -1326,27 +1568,45 @@ def main():
 
     else:
         if args.noauth: 
-            noauth()
+            noauth()                        # initialise la session requests
         else:
-            if not auth(new_session):
+            if not auth(new_session):       # initialise la session requests avec authentification
                 sys.exit(1)
 
-        if args.run_auth:
-            a = args.parameters
-            if not args.sysbus is None:
-                a.insert(0, args.sysbus)
-            args.run_auth(a)
 
-        elif args.req_auth:
-            if type(args.req_auth) is str:
-                requete_print(args.req_auth)
-            elif len(args.req_auth) == 1:
-                requete_print(args.req_auth[0])
-            else:
-                requete_print(args.req_auth[0], args.req_auth[1])
+        if args.modelraw:
+            prof = None if len(args.parameters) == 0 else args.parameters[0]
+            model_raw_cmd(args.sysbus, prof, out=args.out)
+
+        elif args.modeluml:
+            prof = None if len(args.parameters) == 0 else args.parameters[0]
+            model_uml_cmd(args.sysbus, prof, out=args.out)
 
         else:
-            par_defaut(args.sysbus, args.parameters, args.raw)
+
+            if args.out:
+                debug(2, "redirect to", args.out)
+                sys.stdout = open(args.out, "w")
+
+            # commande complexe
+            if args.run_auth:
+                a = args.parameters
+                if not args.sysbus is None:
+                    a.insert(0, args.sysbus)
+                args.run_auth(a)
+
+            # requête simple
+            elif args.req_auth:
+                if type(args.req_auth) is str:
+                    requete_print(args.req_auth)
+                elif len(args.req_auth) == 1:
+                    requete_print(args.req_auth[0])
+                else:
+                    requete_print(args.req_auth[0], args.req_auth[1])
+
+            # requête passée sur la ligne de commandes
+            else:
+                par_defaut(args.sysbus, args.parameters, args.raw)
 
 
 if __name__ == '__main__':
