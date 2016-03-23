@@ -43,7 +43,9 @@ except ImportError as e:
     error("erreur:", e)
     error("Installez http://www.python-requests.org/ :")
     print("   pip3 install requests")
+    print("ou bien (selon la version de tar) :")
     print("   curl -sL https://api.github.com/repos/kennethreitz/requests/tarball/master | tar -xzf - --strip-components 1 '*/requests'")
+    print("   curl -sL https://api.github.com/repos/kennethreitz/requests/tarball/master | tar -xzf - --strip-components=1 --wildcards '*/requests'")
     sys.exit(2)
 
 
