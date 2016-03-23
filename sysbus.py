@@ -41,7 +41,9 @@ try:
     import requests.utils
 except ImportError as e:
     error("erreur:", e)
-    error("Installez http://www.python-requests.org/ : pip3 install requests")
+    error("Installez http://www.python-requests.org/ :")
+    print("   pip3 install requests")
+    print("   curl -sL https://api.github.com/repos/kennethreitz/requests/tarball/master | tar -xzf - --strip-components 1 '*/requests'")
     sys.exit(2)
 
 
@@ -1054,7 +1056,7 @@ def add_commands(parser):
         #print("%20s : %s" % ("IPv6Address", result['data']['IPv6Address']))
 
         result = requete("NMC:getWANStatus")
-        print("%20s : %s" % ("IPv6DelegatedPrefix", result['data']['IPv6DelegatedPrefix']))
+        print("%20s : %s" % ("IPv6DelegatedPrefix", result['data']['IPv6DelegatedPrefix'] if 'IPv6DelegatedPrefix' in result['data'] else 'n/a'))
         print("%20s : %s" % ("IPv6Address", result['data']['IPv6Address']))
 
         #result = requete("sysbus.Time:getTime")
