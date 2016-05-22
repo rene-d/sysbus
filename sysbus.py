@@ -1310,6 +1310,52 @@ def add_commands(parser):
                             "sourcePrefix":"",
                             "id":"udp1701"})
 
+    # TODO
+    def minecraft_cmd(args):
+        """ règle spéciale pour rajouter la règle de forwarding pour L2TP """
+        if len(args) != 1:
+            error("Usage: ...")
+        else:
+            import socket
+
+            port = int(args[0])
+            ip = socket.gethostbyname(socket.getfqdn())
+
+            '''
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(("livebox.home",80))
+            print(s.getsockname()[0])
+            s.close()
+            '''
+
+            print("ajout règle minecraft pour le port interne %s et l'adresse %s" % (port, ip))
+
+            r = requete('sysbus.Firewall:getPortForwarding',
+                        {"id":"minecraft", "origin":"webui"}, silent=True)
+            if not r is None:
+                r = requete('sysbus.Firewall:deletePortForwarding',
+                            {"id":"minecraft",
+                            "origin":"webui",
+                            "destinationIPAddress":r['status']['webui_minecraft']['DestinationIPAddress'] })
+
+            r = requete('sysbus.Firewall:setPortForwarding',
+                            {"description":"minecraft",
+                            "persistent":True,
+                            "enable":True,
+                            "protocol":"6",
+                            "destinationIPAddress":ip,
+                            "internalPort":port,
+                            "externalPort":"55000",
+                            "origin":"webui",
+                            "sourceInterface":"data",
+                            "sourcePrefix":"",
+                            "id":"minecraft"}, silent=True)
+            if not r is None and r['status'] == 'webui_minecraft':
+                print("Succès")
+            else:
+                print("Erreur...")
+                print(r)
+
     def graph_cmd(args):
         """ affiche le graphe fonctionnel des interfaces """
 
