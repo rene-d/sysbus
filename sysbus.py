@@ -1328,7 +1328,6 @@ def add_commands(parser):
             s.close()
             '''
 
-            print("ajout règle minecraft pour le port interne %s et l'adresse %s" % (port, ip))
 
             r = requete('sysbus.Firewall:getPortForwarding',
                         {"id":"minecraft", "origin":"webui"}, silent=True)
@@ -1338,22 +1337,28 @@ def add_commands(parser):
                             "origin":"webui",
                             "destinationIPAddress":r['status']['webui_minecraft']['DestinationIPAddress'] })
 
-            r = requete('sysbus.Firewall:setPortForwarding',
-                            {"description":"minecraft",
-                            "persistent":True,
-                            "enable":True,
-                            "protocol":"6",
-                            "destinationIPAddress":ip,
-                            "internalPort":port,
-                            "externalPort":"55000",
-                            "origin":"webui",
-                            "sourceInterface":"data",
-                            "sourcePrefix":"",
-                            "id":"minecraft"}, silent=True)
-            if not r is None and r['status'] == 'webui_minecraft':
-                print("Succès")
+            if port >= 1024 and port < 65536:
+                print("ajout règle minecraft pour le port interne %s et l'adresse %s" % (port, ip))
+                r = requete('sysbus.Firewall:setPortForwarding',
+                                {"description":"minecraft",
+                                "persistent":True,
+                                "enable":True,
+                                "protocol":"6",
+                                "destinationIPAddress":ip,
+                                "internalPort":port,
+                                "externalPort":"54520",
+                                "origin":"webui",
+                                "sourceInterface":"data",
+                                "sourcePrefix":"",
+                                "id":"minecraft"}, silent=True)
+                if not r is None and r['status'] == 'webui_minecraft':
+                    print("Succès")
+                else:
+                    print("Erreur...")
+
             else:
-                print("Erreur...")
+                print("règle supprimée")
+
                 print(r)
 
     def graph_cmd(args):
