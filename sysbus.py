@@ -1312,22 +1312,14 @@ def add_commands(parser):
 
     # TODO
     def minecraft_cmd(args):
-        """ règle spéciale pour rajouter la règle de forwarding pour L2TP """
+        """ règle spéciale pour minecraft avec comme port externe 54520"""
         if len(args) != 1:
-            error("Usage: ...")
+            error("Usage: -minecraft PORT_INTERNE")
         else:
             import socket
 
             port = int(args[0])
             ip = socket.gethostbyname(socket.getfqdn())
-
-            '''
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.connect(("livebox.home",80))
-            print(s.getsockname()[0])
-            s.close()
-            '''
-
 
             r = requete('sysbus.Firewall:getPortForwarding',
                         {"id":"minecraft", "origin":"webui"}, silent=True)
@@ -1353,13 +1345,26 @@ def add_commands(parser):
                                 "id":"minecraft"}, silent=True)
                 if not r is None and r['status'] == 'webui_minecraft':
                     print("Succès")
+
+                    r = requete("DeviceInfo:get")
+                    ip = r['status']['ExternalIPAddress']
+
+                    r = requete('sysbus.Firewall:getPortForwarding', {"id":"minecraft", "origin":"webui"}, silent=True)
+                    r = r['status']['webui_minecraft']
+
+                    print("règle: %s:%s (externe) <-> %s:%s (interne)" % (ip, r['ExternalPort'], r['DestinationIPAddress'], r['InternalPort']))
+
                 else:
                     print("Erreur...")
+                    print(r)
 
             else:
-                print("règle supprimée")
-
-                print(r)
+                r = requete('sysbus.Firewall:getPortForwarding', {"id":"minecraft", "origin":"webui"}, silent=True)
+                if r is None:
+                    print("règle supprimée")
+                else:
+                    print("Erreur...")
+                    print(r)
 
     def graph_cmd(args):
         """ affiche le graphe fonctionnel des interfaces """
