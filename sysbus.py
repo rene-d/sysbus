@@ -54,7 +54,7 @@ except ImportError as e:
 URL_LIVEBOX = 'http://livebox.home/'
 USER_LIVEBOX = 'admin'
 PASSWORD_LIVEBOX = 'admin'
-
+MINECRAFT_PORT = 54520
 
 ##
 # @brief niveau de détail, -v pour l'augmenter
@@ -105,6 +105,8 @@ def write_conf(args):
     config['main']['URL_LIVEBOX'] = URL_LIVEBOX 
     config['main']['USER_LIVEBOX'] = USER_LIVEBOX 
     config['main']['PASSWORD_LIVEBOX'] = PASSWORD_LIVEBOX 
+    config['minecraft'] = {}
+    config['minecraft']['port'] = str(MINECRAFT_PORT) 
 
     rc = os.path.expanduser("~") + "/" + ".sysbusrc"
     with open(rc, "w") as f:
@@ -131,6 +133,7 @@ def load_conf():
         URL_LIVEBOX = config['main']['URL_LIVEBOX']
         USER_LIVEBOX = config['main']['USER_LIVEBOX']
         PASSWORD_LIVEBOX = config['main']['PASSWORD_LIVEBOX']
+        MINECRAFT_PORT = config['minecraft']['port']
     except:
         return False
 
@@ -992,6 +995,32 @@ def MIBs_save_cmd():
             f.close()
 
 
+def livebox_info():
+    result = requete("DeviceInfo:get")
+    print("%20s : %s" % ("SoftwareVersion", result['status']['SoftwareVersion']))
+    #print("%20s : %s" % ("UpTime", str(datetime.timedelta(seconds=int(result['status']['UpTime'])))))
+    print("%20s : %s  (NumberOfReboots: %s)" % ("UpTime", str(datetime.timedelta(seconds=int(result['status']['UpTime']))), result['status']['NumberOfReboots']))
+    print("%20s : %s" % ("ExternalIPAddress", result['status']['ExternalIPAddress']))
+
+    #result = requete("Devices.Device.lan:getFirstParameter", { "parameter": "IPAddress" })
+    #print("%20s : %s" % ("IPv4Address", result['status']))
+
+    #result = requete("NMC.IPv6:get") 
+    #print("%20s : %s" % ("IPv6Address", result['data']['IPv6Address']))
+
+    result = requete("NMC:getWANStatus")
+    print("%20s : %s" % ("IPv6DelegatedPrefix", result['data']['IPv6DelegatedPrefix'] if 'IPv6DelegatedPrefix' in result['data'] else 'n/a'))
+    print("%20s : %s" % ("IPv6Address", result['data']['IPv6Address']))
+
+    #result = requete("sysbus.Time:getTime")
+    #print("%20s : %s" % ("Time", result['data']['time']))
+
+    result = requete("sysbus.VoiceService.VoiceApplication:listTrunks")
+    for i in result['status']:
+        for j in i['trunk_lines']:
+            if j['enable'] == "Enabled":
+                print("%20s : %s" % ("directoryNumber", j['directoryNumber']))
+
 
 ##
 # @brief inspiré de http://forum.eedomus.com/viewtopic.php?f=50&t=2914
@@ -1045,30 +1074,7 @@ def add_commands(parser):
 
     def info_cmd(args):
         """ affiche des infos de la Livebox (adresses IP)"""
-
-        result = requete("DeviceInfo:get")
-        print("%20s : %s" % ("SoftwareVersion", result['status']['SoftwareVersion']))
-        print("%20s : %s" % ("UpTime", str(datetime.timedelta(seconds=int(result['status']['UpTime'])))))
-        print("%20s : %s" % ("ExternalIPAddress", result['status']['ExternalIPAddress']))
-
-        #result = requete("Devices.Device.lan:getFirstParameter", { "parameter": "IPAddress" })
-        #print("%20s : %s" % ("IPv4Address", result['status']))
-
-        #result = requete("NMC.IPv6:get") 
-        #print("%20s : %s" % ("IPv6Address", result['data']['IPv6Address']))
-
-        result = requete("NMC:getWANStatus")
-        print("%20s : %s" % ("IPv6DelegatedPrefix", result['data']['IPv6DelegatedPrefix'] if 'IPv6DelegatedPrefix' in result['data'] else 'n/a'))
-        print("%20s : %s" % ("IPv6Address", result['data']['IPv6Address']))
-
-        #result = requete("sysbus.Time:getTime")
-        #print("%20s : %s" % ("Time", result['data']['time']))
-
-        result = requete("sysbus.VoiceService.VoiceApplication:listTrunks")
-        for i in result['status']:
-            for j in i['trunk_lines']:
-                if j['enable'] == "Enabled":
-                    print("%20s : %s" % ("directoryNumber", j['directoryNumber']))
+        livebox_info()
 
 
 
@@ -1312,7 +1318,7 @@ def add_commands(parser):
 
     # TODO
     def minecraft_cmd(args):
-        """ règle spéciale pour minecraft avec comme port externe 54520"""
+        """ règle spéciale pour minecraft (forwarding port externe fixe vers un port interne variable) """
         if len(args) != 1:
             error("Usage: -minecraft PORT_INTERNE")
         else:
@@ -1338,7 +1344,7 @@ def add_commands(parser):
                                 "protocol":"6",
                                 "destinationIPAddress":ip,
                                 "internalPort":port,
-                                "externalPort":"54520",
+                                "externalPort":str(MINECRAFT_PORT),
                                 "origin":"webui",
                                 "sourceInterface":"data",
                                 "sourcePrefix":"",
@@ -1514,11 +1520,11 @@ def par_defaut(sysbus, args, raw=False):
 
     # par défaut, affiche l'heure de la Livebox
     if sysbus is None:
-        result = requete("sysbus.Time:getTime")
-        if result:
-            print("Livebox time: ", result['data']['time'])
-        else:
-            pass
+        livebox_info()
+
+        #result = requete("sysbus.Time:getTime")
+        #if result:
+        #    print("Livebox time: ", result['data']['time'])
 
     else:
         parameters = OrderedDict()
@@ -1643,7 +1649,6 @@ def main():
             model_uml_cmd(args.sysbus, prof, out=args.out)
 
         else:
-
             if args.out:
                 debug(2, "redirect to", args.out)
                 sys.stdout = open(args.out, "w")
