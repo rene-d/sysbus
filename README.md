@@ -34,7 +34,7 @@ Un certain nombre de requêtes sont intégrées au script (comme la demande de l
 
 Le script est aussi capable d'envoyer presque n'importe quelle requête, pourvu qu'on la spécifie entièrement sur la ligne de commande.
 
-    $ ./sysbus.py sysbus/Time:getTime
+    $ ./sysbus.py Time:getTime
     Livebox time:  Sun, 14 Feb 2016 22:13:30 GMT+0100
 
 L'option `-h` ou `--help` affiche l'ensemble de la syntaxe possible.
@@ -139,6 +139,15 @@ Le datamodel reprend certains éléments de différents TR du Broadband Forum (c
 Par ailleurs, la présence d'un utilisateur 'cwmpd' (cf. l'objet UserManagement) au mot de passe inconnu tend à prouver que la Livebox communique en utilisant _CWMP_ (ou [TR-069](https://fr.wikipedia.org/wiki/TR-069)) avec sa gateway de management côté Orange.
 
 ![diagramme de classe Hosts](docs/Hosts.png)
+
+### Nouveautés Livebox 4
+
+L'interface web de la LB4 est beaucoup plus évoluée. Le datamodel est sensiblement le même, avec des objets en plus.
+
+On y trouve aussi une description des méthodes via des requêtes Json :
+
+    curl -s http://livebox.home/sdkut/apis/pcb/Time/getTime.json | jq .
+    
 
 ## Le graphe NeMo.Intf
 
