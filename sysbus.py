@@ -250,6 +250,7 @@ def requete(chemin, args=None, get=False, raw=False, silent=False):
     c = str.replace(chemin or "sysbus", ".", "/")
     if c[0] == "/":
         c = c[1:]
+
     if c[0:7] != "sysbus/":
         c = "sysbus/" + c
 
@@ -273,6 +274,13 @@ def requete(chemin, args=None, get=False, raw=False, silent=False):
 
         data = { }
         data['parameters'] = parameters
+
+        # l'ihm des livebox 4 utilise une autre API, qui fonctionne aussi sur les lb3
+        data['service'] = c.split(':')[0].replace('/', '.')
+        if data['service'][0:7] == "sysbus.":
+            data['service'] = data['service'][7:]
+        data['method'] = c.split(':')[1]
+        c = 'ws'
 
         # envoie la requête avec les entêtes qui vont bien
         debug(1, "requête: %s with %s" % (c, str(data)))
@@ -1077,6 +1085,14 @@ def add_commands(parser):
         livebox_info()
 
 
+    def time_cmd(args):
+        """ affiche l'heure de la Livebox """
+        result = requete("Time:getTime")
+        if result:
+            t = result['data']['time']
+            result = requete("Time:getLocalTimeZoneName")
+            tz = result['data']['timezone']
+            print("Livebox time: {} ({})".format(t, tz))
 
     #
     def wifi_cmd(args):

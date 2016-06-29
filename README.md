@@ -55,6 +55,12 @@ Il est raisonnable de penser que c'est également par cette voie qu'Orange admin
 
 ### Exemple avec curl
 
+API utilisée par les Livebox 4 (firmware SG40_sip-fr-2.14.8.1_7.21.3.1), qui fonctionne avec les Livebox 3 (avec le firmware SG30_sip-fr-5.17.3.1 au moins):
+
+    $ curl -s -X POST -H "Content-Type: application/x-sah-ws-1-call+json" -d '{"service":"NMC","method":"getWANStatus","parameters":{}}' http://192.168.1.1/ws
+    
+API utilisée par les précédents Livebox ainsi que les applications mobiles: 
+
     $ curl -s -X POST -H "Content-Type: application/json" -d '{"parameters":{}}' http://192.168.1.1/sysbus/NMC:getWANStatus | jq .
 
 Résultat :
