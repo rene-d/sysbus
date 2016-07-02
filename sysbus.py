@@ -76,7 +76,7 @@ sah_headers = None
 # @return 
 def debug(level, *args):
     if verbosity >= level:
-
+   
         RED = '\033[91m'
         GREEN = '\033[92m'
         YELLOW = '\033[93m'
@@ -279,6 +279,8 @@ def requete(chemin, args=None, get=False, raw=False, silent=False):
         data['service'] = c.split(':')[0].replace('/', '.')
         if data['service'][0:7] == "sysbus.":
             data['service'] = data['service'][7:]
+        #elif data['service'][0:4] == "com.":
+        #    data['service'] = data['service'][4:]
         data['method'] = c.split(':')[1]
         c = 'ws'
 
@@ -1513,6 +1515,35 @@ def add_commands(parser):
             dot.render(filename="devices-simple.gv", view=view)
         else:
             dot.render(filename="devices.gv", view=view)
+
+
+    ##
+    # @brief 
+    #
+    # @param args
+    #
+    # @return 
+    def calls_cmd(args):
+        """ affiche la liste des appels """
+        r = requete("VoiceService.VoiceApplication:getCallList")
+        r = r['status']
+        if len(args) == 1 and args[0] == '?':
+            return print(r[0].keys())
+
+        
+        for i in reversed(r):
+            if len(args) > 0:
+                print(i[args[0]])
+            else:
+                d = datetime.datetime.strptime(i['startTime'], "%Y-%m-%dT%H:%M:%SZ")
+                
+                print("{:>3} {:12}   {}  {}   {:10}".format(
+                    i['callId'],
+                    i['remoteNumber'],
+                    d,
+                    str(datetime.timedelta(seconds=int(i['duration']))),
+                    i['callType']
+                    ))
 
 
     ################################################################################
