@@ -279,8 +279,6 @@ def requete(chemin, args=None, get=False, raw=False, silent=False):
         data['service'] = c.split(':')[0].replace('/', '.')
         if data['service'][0:7] == "sysbus.":
             data['service'] = data['service'][7:]
-        #elif data['service'][0:4] == "com.":
-        #    data['service'] = data['service'][4:]
         data['method'] = c.split(':')[1]
         c = 'ws'
 
