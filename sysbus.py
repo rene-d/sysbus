@@ -190,7 +190,7 @@ def auth(new_session=False):
             session = requests.Session()
 
             auth = { 'username':USER_LIVEBOX, 'password':PASSWORD_LIVEBOX }
-            debug(2, "auth with", auth)
+            debug(2, "auth with", str(auth))
             r = session.post(URL_LIVEBOX + 'authenticate', params=auth) 
 
             if not 'contextID' in r.json()['data']:
@@ -212,6 +212,7 @@ def auth(new_session=False):
                     'Content-Type':'application/x-sah-ws-1-call+json; charset=UTF-8',
                     'Accept':'text/javascript' }
 
+        # vérification de l'authentification
         r = session.post(URL_LIVEBOX + 'sysbus/Time:getTime', headers=sah_headers, data='{"parameters":{}}')
         if r.json()['result']['status'] == True:
             return True
@@ -978,7 +979,7 @@ def MIBs_save_cmd():
 
     # dump les datamodels de chaque interface
     for i in intf:
-        r = requete('sysbus.NeMo.Intf.' + i, get=True)
+        r = requete('NeMo.Intf.' + i, get=True)
         if r is None: continue
 
         # le modèle en json
@@ -996,7 +997,7 @@ def MIBs_save_cmd():
 
     # dump le contenu des MIBs par interface
     for i in intf:
-        r = requete('sysbus.NeMo.Intf.' + i + ':getMIBs', { "traverse": "this" })
+        r = requete('NeMo.Intf.' + i + ':getMIBs', { "traverse": "this" })
         if r is None: continue
         with open("mibs/" + i + ".mib", "w") as f:
             pprint.pprint(r, stream=f)
@@ -1017,13 +1018,14 @@ def livebox_info():
     #print("%20s : %s" % ("IPv6Address", result['data']['IPv6Address']))
 
     result = requete("NMC:getWANStatus")
-    print("%20s : %s" % ("IPv6DelegatedPrefix", result['data']['IPv6DelegatedPrefix'] if 'IPv6DelegatedPrefix' in result['data'] else 'n/a'))
-    print("%20s : %s" % ("IPv6Address", result['data']['IPv6Address']))
+    if 'data' in result:
+        print("%20s : %s" % ("IPv6DelegatedPrefix", result['data']['IPv6DelegatedPrefix'] if 'IPv6DelegatedPrefix' in result['data'] else 'n/a'))
+        print("%20s : %s" % ("IPv6Address", result['data']['IPv6Address']))
 
-    #result = requete("sysbus.Time:getTime")
+    #result = requete("Time:getTime")
     #print("%20s : %s" % ("Time", result['data']['time']))
 
-    result = requete("sysbus.VoiceService.VoiceApplication:listTrunks")
+    result = requete("VoiceService.VoiceApplication:listTrunks")
     for i in result['status']:
         for j in i['trunk_lines']:
             if j['enable'] == "Enabled":
@@ -1039,18 +1041,18 @@ def livebox_info():
 def add_singles(parser):
 
     cmds = [
-        [ "wifistate", "", "sysbus.NMC.Wifi:get" ],
-#        [ "lanstate", "", "sysbus.NeMo.Intf.lan:getMIBs" ],
-#        [ "dslstate", "", "sysbus.NeMo.Intf.dsl0:getDSLStats" ],
-#        [ "iplan", "", "sysbus.NeMo.Intf.lan:luckyAddrAddress" ],
-#        [ "ipwan", "", "sysbus.NeMo.Intf.data:luckyAddrAddress" ],
-        [ "phonestate", "", "sysbus.VoiceService.VoiceApplication:listTrunks" ],
-        [ "tvstate", "", "sysbus.NMC.OrangeTV:getIPTVStatus" ],
-        [ "wifion", "", [ "sysbus.NMC.Wifi:set", { "Enable":True, "Status":True } ] ],
-        [ "wifioff", "", [ "sysbus.NMC.Wifi:set", { "Enable":False, "Status":False } ] ],
-#        [ "macon", "", [ "sysbus.NeMo.Intf.wl0:setWLANConfig", {"mibs":{"wlanvap":{"wl0":{"MACFiltering":{"Mode":"WhiteList"}}}}} ] ],
-#        [ "macoff", "", [ "sysbus.NeMo.Intf.wl0:setWLANConfig", {"mibs":{"wlanvap":{"wl0":{"MACFiltering":{"Mode":"Off"}}}}} ] ],
-        [ "devices", "", "sysbus.Hosts:getDevices" ],
+        [ "wifistate", "", "NMC.Wifi:get" ],
+#        [ "lanstate", "", "NeMo.Intf.lan:getMIBs" ],
+#        [ "dslstate", "", "NeMo.Intf.dsl0:getDSLStats" ],
+#        [ "iplan", "", "NeMo.Intf.lan:luckyAddrAddress" ],
+#        [ "ipwan", "", "NeMo.Intf.data:luckyAddrAddress" ],
+        [ "phonestate", "", "VoiceService.VoiceApplication:listTrunks" ],
+        [ "tvstate", "", "NMC.OrangeTV:getIPTVStatus" ],
+        [ "wifion", "", [ "NMC.Wifi:set", { "Enable":True, "Status":True } ] ],
+        [ "wifioff", "", [ "NMC.Wifi:set", { "Enable":False, "Status":False } ] ],
+#        [ "macon", "", [ "NeMo.Intf.wl0:setWLANConfig", {"mibs":{"wlanvap":{"wl0":{"MACFiltering":{"Mode":"WhiteList"}}}}} ] ],
+#        [ "macoff", "", [ "NeMo.Intf.wl0:setWLANConfig", {"mibs":{"wlanvap":{"wl0":{"MACFiltering":{"Mode":"Off"}}}}} ] ],
+        [ "devices", "", "Hosts:getDevices" ],
     ]
 
     for i in cmds:
@@ -1067,13 +1069,13 @@ def add_commands(parser):
 
     cmds = [
         [ "wpson", "active le (WPS) Wi-Fi Protected Setup",
-                    [ "sysbus/NeMo/Intf/wl0:setWLANConfig", 
+                    [ "NeMo.Intf.wl0:setWLANConfig", 
                       {"mibs":{"wlanvap":{"wl0":{"WPS":{"Enable":True}},"wl1":{"WPS":{"Enable":True}}}}} ] ],
         [ "wpsoff", "désactive le (WPS) Wi-Fi Protected Setup",
-                    [ "sysbus/NeMo/Intf/wl0:setWLANConfig", 
+                    [ "NeMo.Intf.wl0:setWLANConfig", 
                       {"mibs":{"wlanvap":{"wl0":{"WPS":{"Enable":False}},"wl1":{"WPS":{"Enable":False}}}}} ] ],
         [ "version", "affiche la version et détails de la Livebox",
-                    [ "sysbus.DeviceInfo:get" ] ],
+                    [ "DeviceInfo:get" ] ],
     ]
 
     for i in cmds:
@@ -1097,7 +1099,7 @@ def add_commands(parser):
     #
     def wifi_cmd(args):
         """ affiche les passphrases des réseaux Wi-Fi """
-        r = requete("sysbus.NeMo.Intf.lan:getMIBs")
+        r = requete("NeMo.Intf.lan:getMIBs")
         for wl in r['status']['wlanvap']:
             c = r['status']['wlanvap'][wl]
             print(wl, c['BSSID'], c['SSID'], c['Security']['KeyPassPhrase'], c['Security']['ModeEnabled'])
@@ -1111,23 +1113,23 @@ def add_commands(parser):
         name = args[1]
         print("set name", mac, name)
         if len(args) == 2:
-            requete_print('sysbus.Devices.Device.' + mac + ':setName', {"name":name })
+            requete_print('Devices.Device.' + mac + ':setName', {"name":name })
         else:
             for i in range(2, len(args)):
-                requete_print('sysbus.Devices.Device.' + mac + ':setName', {"name":name, "source":args[i]})
+                requete_print('Devices.Device.' + mac + ':setName', {"name":name, "source":args[i]})
 
     #
     def getdev_cmd(args):
         if len(args) == 1:
             mac = str.upper(args[0])
-            requete_print('sysbus/Devices/Device/' + mac + ':get')
+            requete_print('Devices.Device.' + mac + ':get')
         else:
             error("Usage: %s -getdev MACAddress" % sys.argv[0])
 
     #
     def dhcp_cmd(args):
         """ affiche la table des DHCP statiques """
-        requete_print("sysbus.DHCPv4.Server.Pool.default:getStaticLeases")
+        requete_print("DHCPv4.Server.Pool.default:getStaticLeases")
 
     #
     def adddhcp_cmd(args):
@@ -1137,7 +1139,7 @@ def add_commands(parser):
             name = args[1]
             print("set dhcp", mac, name)
 
-            requete_print('sysbus/DHCPv4/Server/Pool/default:addStaticLease',
+            requete_print('DHCPv4.Server.Pool.default:addStaticLease',
                 {"MACAddress": mac ,"IPAddress":  name })
         else:
             error("Usage: %s -adddchp MACAddress IPAddress" % sys.argv[0])
@@ -1147,23 +1149,23 @@ def add_commands(parser):
         """ supprime une entrée DHCP statique """
         if len(args) >= 1:
             if args[0] == "all":
-                leases = requete('sysbus.DHCPv4.Server.Pool.default:getStaticLeases')
+                leases = requete('DHCPv4.Server.Pool.default:getStaticLeases')
                 for lease in leases['status']:
                     mac = lease['MACAddress']
-                    requete_print('sysbus/DHCPv4/Server/Pool/default:deleteStaticLease', {"MACAddress": mac})
+                    requete_print('DHCPv4.Server.Pool.default:deleteStaticLease', {"MACAddress": mac})
 
             else:
                 for i in args:
                     mac = str.upper(i)
                     print("del dhcp", mac)
-                    requete_print('sysbus/DHCPv4/Server/Pool/default:deleteStaticLease', {"MACAddress": mac})
+                    requete_print('DHCPv4.Server.Pool.default:deleteStaticLease', {"MACAddress": mac})
         else:
             error("Usage: %s -deldchp MACAddress..." % sys.argv[0])
         
     #
     def hosts_cmd(args):
         """ affiche la liste des hosts """
-        r = requete("sysbus/Hosts:getDevices")
+        r = requete("Hosts:getDevices")
         if len(args) > 0:
             for i in range(0, len(args)):
                 for host in r['status']:
@@ -1177,12 +1179,18 @@ def add_commands(parser):
             #pprint.pprint(r['status'])
             for host in r['status']:
                 actif = " " if host['active'] else "*"
-                print("%-18s %-5s %c %-30s %s" % (host['physAddress'], host['layer2Interface'], actif, host['ipAddress'], host['hostName']))
+                s = "%-18s %-5s %c %-30s" % (host['physAddress'], host['layer2Interface'], actif, host['hostName'])
+                if 'addresses' in host and len(host['addresses']) > 0:
+                    for a in host['addresses']:
+                        print("{} {}".format(s, a['ipAddress']))
+                        s = " " * len(s)
+                else:
+                    print(s)
 
     #
     def ipv6_cmd(args):
         """ liste les hosts avec une adresse IPv6 """
-        r = requete("sysbus.Devices:get")
+        r = requete("Devices:get")
         for i in r['status']:
             a = "-"
             if 'IPv6Address' in i:
@@ -1262,7 +1270,7 @@ def add_commands(parser):
         if len(args) == 0:
 
             # récupère toutes les MIBs de toutes les interfaces
-            r = requete('sysbus.NeMo.Intf.data:getMIBs', { "traverse": "all" })
+            r = requete('NeMo.Intf.data:getMIBs', { "traverse": "all" })
             if r is None: return
             pprint.pprint(r) 
             
@@ -1296,7 +1304,7 @@ def add_commands(parser):
 
 #            # sauve toutes les MIBs de toutes les interfaces dans un fichier
 #            elif args[0] == "save":
-#                r = requete('sysbus.NeMo.Intf.data:getMIBs', { "traverse": "all" })
+#                r = requete('NeMo.Intf.data:getMIBs', { "traverse": "all" })
 #                if r is None: return
 #                with open("MIBs_all", "w") as f:
 #                    pprint.pprint(r, stream=f)
@@ -1305,9 +1313,9 @@ def add_commands(parser):
 
             else:
                 if len(args) > 1:
-                    r = requete('sysbus.NeMo.Intf.' + args[0] + ':getMIBs', { "traverse": "this", "mibs":args[1] })
+                    r = requete('NeMo.Intf.' + args[0] + ':getMIBs', { "traverse": "this", "mibs":args[1] })
                 else:
-                    r = requete('sysbus.NeMo.Intf.' + args[0] + ':getMIBs', { "traverse": "this" })
+                    r = requete('NeMo.Intf.' + args[0] + ':getMIBs', { "traverse": "this" })
                 if r is None: return
                 pprint.pprint(r)
 
@@ -1319,7 +1327,7 @@ def add_commands(parser):
             error("Usage: ...")
         else:
             print("ajout règle udp1701 pour l'adresse interne %s" % args[0])
-            requete_print('sysbus.Firewall:setPortForwarding',
+            requete_print('Firewall:setPortForwarding',
                             {"description":"udp1701",
                             "persistent":True,
                             "enable":True,
@@ -1332,28 +1340,45 @@ def add_commands(parser):
                             "sourcePrefix":"",
                             "id":"udp1701"})
 
-    # TODO
+    # crée une règle de firewall IPv4 sur un port fixe externe et variable interne
+    # pratique pour jouer à Minecraft entre amis sans configurer de VPN
+    # (d'où le nom de la commande)
     def minecraft_cmd(args):
         """ règle spéciale pour minecraft (forwarding port externe fixe vers un port interne variable) """
         if len(args) != 1:
-            error("Usage: -minecraft PORT_INTERNE")
+            error("Usage: -minecraft PORT_INTERNE ou ? ou 0 pour supprimer")
+
+        elif args[0] == '?':
+
+            r = requete('Firewall:getPortForwarding',
+                        {"id":"minecraft", "origin":"webui"}, silent=True)
+            if r is None:
+                print("pas de règle minecraft active")
+            else:
+                r = r['status']['webui_minecraft']
+
+                ip = requete("DeviceInfo:get")
+                ip = ip['status']['ExternalIPAddress']
+
+                print("règle: %s:%s (externe) <-> %s:%s (interne)" % (ip, r['ExternalPort'], r['DestinationIPAddress'], r['InternalPort']))
+  
         else:
             import socket
 
             port = int(args[0])
             ip = socket.gethostbyname(socket.getfqdn())
 
-            r = requete('sysbus.Firewall:getPortForwarding',
+            r = requete('Firewall:getPortForwarding',
                         {"id":"minecraft", "origin":"webui"}, silent=True)
             if not r is None:
-                r = requete('sysbus.Firewall:deletePortForwarding',
+                r = requete('Firewall:deletePortForwarding',
                             {"id":"minecraft",
                             "origin":"webui",
                             "destinationIPAddress":r['status']['webui_minecraft']['DestinationIPAddress'] })
 
             if port >= 1024 and port < 65536:
                 print("ajout règle minecraft pour le port interne %s et l'adresse %s" % (port, ip))
-                r = requete('sysbus.Firewall:setPortForwarding',
+                r = requete('Firewall:setPortForwarding',
                                 {"description":"minecraft",
                                 "persistent":True,
                                 "enable":True,
@@ -1371,7 +1396,7 @@ def add_commands(parser):
                     r = requete("DeviceInfo:get")
                     ip = r['status']['ExternalIPAddress']
 
-                    r = requete('sysbus.Firewall:getPortForwarding', {"id":"minecraft", "origin":"webui"}, silent=True)
+                    r = requete('Firewall:getPortForwarding', {"id":"minecraft", "origin":"webui"}, silent=True)
                     r = r['status']['webui_minecraft']
 
                     print("règle: %s:%s (externe) <-> %s:%s (interne)" % (ip, r['ExternalPort'], r['DestinationIPAddress'], r['InternalPort']))
@@ -1381,7 +1406,7 @@ def add_commands(parser):
                     print(r)
 
             else:
-                r = requete('sysbus.Firewall:getPortForwarding', {"id":"minecraft", "origin":"webui"}, silent=True)
+                r = requete('Firewall:getPortForwarding', {"id":"minecraft", "origin":"webui"}, silent=True)
                 if r is None:
                     print("règle supprimée")
                 else:
@@ -1567,7 +1592,7 @@ def par_defaut(sysbus, args, raw=False):
     if sysbus is None:
         livebox_info()
 
-        #result = requete("sysbus.Time:getTime")
+        #result = requete(Time:getTime")
         #if result:
         #    print("Livebox time: ", result['data']['time'])
 
