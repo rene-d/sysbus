@@ -276,11 +276,12 @@ def requete(chemin, args=None, get=False, raw=False, silent=False):
         data = { }
         data['parameters'] = parameters
 
-        # l'ihm des livebox 4 utilise une autre API, qui fonctionne aussi sur les lb3
-        data['service'] = c.split(':')[0].replace('/', '.')
+        # l'ihm des livebox 4 utilise une autre API, qui fonctionne aussi sur les lb2 et lb3
+        sep = c.rfind(':')
+        data['service'] = c[0:sep].replace('/', '.')
         if data['service'][0:7] == "sysbus.":
             data['service'] = data['service'][7:]
-        data['method'] = c.split(':')[1]
+        data['method'] = c[sep+1:]
         c = 'ws'
 
         # envoie la requête avec les entêtes qui vont bien
@@ -1004,32 +1005,77 @@ def MIBs_save_cmd():
             f.close()
 
 
+def requete_object(path):
+
+    def get_parameters(node):
+        o = dict()
+        if 'parameters' in node:
+            for p in node['parameters']:
+                if p['type'] == 'string':
+                    o[p['name']] = p['value']
+                elif p['type'] == 'uint32':
+                    o[p['name']] = int(p['value'])
+                elif p['type'] == 'date_time':
+                    o[p['name']] = p['value']
+                else:
+                    print("unkwown type: ", str(p))
+                    sys.exit()
+        return o
+
+    def obj(node):
+        # si ce n'est pas un noeud du datamodel, on sort
+        if not 'objectInfo' in node:
+            return
+        #o = node['objectInfo']
+        #pprint.pprint(o)
+        o = get_parameters(node)
+        return o
+
+    r = requete(path, 0, get=True)
+    o = []
+    for node in r:
+        o.append(obj(node))
+
+    return o
+
+
+
 def livebox_info():
-    result = requete("DeviceInfo:get")
-    print("%20s : %s" % ("SoftwareVersion", result['status']['SoftwareVersion']))
-    #print("%20s : %s" % ("UpTime", str(datetime.timedelta(seconds=int(result['status']['UpTime'])))))
-    print("%20s : %s  (NumberOfReboots: %s)" % ("UpTime", str(datetime.timedelta(seconds=int(result['status']['UpTime']))), result['status']['NumberOfReboots']))
-    print("%20s : %s" % ("ExternalIPAddress", result['status']['ExternalIPAddress']))
+    result = requete("DeviceInfo:get", silent=True)
+    if result is None:
+        # l'objet DeviceInfo n'a pas de méthode dans la MIB de la Livebox 2
+        o = requete_object("DeviceInfo")
+        o = o[0]
+        print("%20s : %s" % ("SoftwareVersion", o['SoftwareVersion']))
+        print("%20s : %s" % ("UpTime", str(datetime.timedelta(seconds=int(o['UpTime'])))))
+        print("%20s : %s" % ("ExternalIPAddress", o['ExternalIPAddress']))
+    else:
+        o = result['status']
+        print("%20s : %s" % ("SoftwareVersion", o['SoftwareVersion']))
+        print("%20s : %s  (NumberOfReboots: %s)" % ("UpTime", str(datetime.timedelta(seconds=int(o['UpTime']))), o['NumberOfReboots']))
+        print("%20s : %s" % ("ExternalIPAddress", o['ExternalIPAddress']))
 
-    #result = requete("Devices.Device.lan:getFirstParameter", { "parameter": "IPAddress" })
-    #print("%20s : %s" % ("IPv4Address", result['status']))
+        # pas d'objet Devices dans la Livebox 2
+        result = requete("Devices.Device.lan:getFirstParameter", { "parameter": "IPAddress" }, silent=True)
+        print("%20s : %s" % ("IPv4Address", result['status']))
 
-    #result = requete("NMC.IPv6:get") 
-    #print("%20s : %s" % ("IPv6Address", result['data']['IPv6Address']))
-
-    result = requete("NMC:getWANStatus")
-    if 'data' in result:
-        print("%20s : %s" % ("IPv6DelegatedPrefix", result['data']['IPv6DelegatedPrefix'] if 'IPv6DelegatedPrefix' in result['data'] else 'n/a'))
+        # ni d'adresse IPv6
+        result = requete("NMC.IPv6:get") 
         print("%20s : %s" % ("IPv6Address", result['data']['IPv6Address']))
 
-    #result = requete("Time:getTime")
-    #print("%20s : %s" % ("Time", result['data']['time']))
+        result = requete("NMC:getWANStatus")
+        if 'data' in result:
+            print("%20s : %s" % ("IPv6DelegatedPrefix", result['data']['IPv6DelegatedPrefix'] if 'IPv6DelegatedPrefix' in result['data'] else 'n/a'))
+            print("%20s : %s" % ("IPv6Address", result['data']['IPv6Address']))
 
     result = requete("VoiceService.VoiceApplication:listTrunks")
     for i in result['status']:
         for j in i['trunk_lines']:
             if j['enable'] == "Enabled":
                 print("%20s : %s" % ("directoryNumber", j['directoryNumber']))
+
+    #result = requete("Time:getTime")
+    #print("%20s : %s" % ("Time", result['data']['time']))
 
 
 ##
@@ -1095,6 +1141,18 @@ def add_commands(parser):
             result = requete("Time:getLocalTimeZoneName")
             tz = result['data']['timezone']
             print("Livebox time: {} ({})".format(t, tz))
+
+
+    def dslrate_cmd(args):
+        """ DSL datarate """
+        result = requete("NeMo.Intf.data:getMIBs", { "traverse":"down", "mibs":"dsl" })
+        if 'status' in result and 'dsl' in result['status'] and 'dsl0' in result['status']['dsl']:
+            m = result['status']['dsl']['dsl0']
+            print("Downstream: {:6.2f} Mbit".format(m['DownstreamCurrRate'] / 1024.))
+            print("Upstream:   {:6.2f} Mbit".format(m['UpstreamCurrRate'] / 1024.))
+        else:
+            print("DSL rate non disponible")
+                
 
     #
     def wifi_cmd(args):
