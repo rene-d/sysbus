@@ -73,10 +73,10 @@ sah_headers = None
 # @param level niveau de détail
 # @param args
 #
-# @return 
+# @return
 def debug(level, *args):
     if verbosity >= level:
-   
+
         RED = '\033[91m'
         GREEN = '\033[92m'
         YELLOW = '\033[93m'
@@ -98,15 +98,15 @@ def debug(level, *args):
 ##
 # @brief écrit le fichier de configuration
 #
-# @return 
+# @return
 def write_conf(args):
     config = configparser.ConfigParser()
     config['main'] = {}
-    config['main']['URL_LIVEBOX'] = URL_LIVEBOX 
-    config['main']['USER_LIVEBOX'] = USER_LIVEBOX 
-    config['main']['PASSWORD_LIVEBOX'] = PASSWORD_LIVEBOX 
+    config['main']['URL_LIVEBOX'] = URL_LIVEBOX
+    config['main']['USER_LIVEBOX'] = USER_LIVEBOX
+    config['main']['PASSWORD_LIVEBOX'] = PASSWORD_LIVEBOX
     config['minecraft'] = {}
-    config['minecraft']['port'] = str(MINECRAFT_PORT) 
+    config['minecraft']['port'] = str(MINECRAFT_PORT)
 
     rc = os.path.expanduser("~") + "/" + ".sysbusrc"
     with open(rc, "w") as f:
@@ -121,7 +121,7 @@ def write_conf(args):
 ##
 # @brief lit le fichier de configuration
 #
-# @return 
+# @return
 def load_conf():
     global USER_LIVEBOX, PASSWORD_LIVEBOX, URL_LIVEBOX
 
@@ -144,25 +144,25 @@ def load_conf():
 ##
 # @brief charge la conf et sort s'il y a une erreur
 #
-# @return 
+# @return
 def check_conf():
     print("Le fichier ~/.sysbusrc n'a pas été trouvé. Il est nécessaire pour le fonctionnement du programme.")
     print("Utilisez l'option -config (avec éventuellement -url -user -password) pour le créer.")
     print("Exemple:")
     print("   sysbus.py -config -password=1234ABCD")
     sys.exit(2)
-    
+
 
 ##
 # @brief retourne le chemin du fichier de sauvegarde du cookie et contextID
 #
-# @return 
+# @return
 def state_file():
     return tempfile.gettempdir() + "/" + "sysbus_state"
 
 
 ##
-# @brief authentification 
+# @brief authentification
 #  - essaie avec les données mémorisées (.cookie / .contextID)
 #  - envoie la requête d'authentification
 #
@@ -179,7 +179,7 @@ def auth(new_session=False):
 
             with open(state_file(), 'rb') as f:
                 cookies = requests.utils.cookiejar_from_dict(pickle.load(f))
-                
+
                 session = requests.Session()
                 session.cookies = cookies
 
@@ -191,7 +191,7 @@ def auth(new_session=False):
 
             auth = { 'username':USER_LIVEBOX, 'password':PASSWORD_LIVEBOX }
             debug(2, "auth with", str(auth))
-            r = session.post(URL_LIVEBOX + 'authenticate', params=auth) 
+            r = session.post(URL_LIVEBOX + 'authenticate', params=auth)
 
             if not 'contextID' in r.json()['data']:
                 error("auth error", str(r.text))
@@ -206,7 +206,7 @@ def auth(new_session=False):
                 pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
                 data = contextID
                 pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
-            
+
         sah_headers = { 'X-Context':contextID,
                     'X-Prototype-Version':'1.7',
                     'Content-Type':'application/x-sah-ws-1-call+json; charset=UTF-8',
@@ -226,7 +226,7 @@ def auth(new_session=False):
 ##
 # @brief requêtes sans authentification: crée la session et des headers par défaut
 #
-# @return 
+# @return
 def noauth():
     global session, sah_headers
     session = requests.Session()
@@ -244,7 +244,7 @@ def noauth():
 # @param args
 # @param get
 #
-# @return 
+# @return
 def requete(chemin, args=None, get=False, raw=False, silent=False):
 
     # nettoie le chemin de la requête
@@ -322,11 +322,11 @@ def requete(chemin, args=None, get=False, raw=False, silent=False):
             if not silent:
                 error("erreur:", t)
             return None
-    
+
     else:
         debug(1, "-------------------------")
         return r
-    
+
 
 ##
 # @brief envoie une requête sysbus et affiche le résultat
@@ -334,7 +334,7 @@ def requete(chemin, args=None, get=False, raw=False, silent=False):
 # @param chemin chemin de la requête
 # @param args paramètres supplementaires
 #
-# @return 
+# @return
 def requete_print(chemin, args=None, get=False):
     #print(chemin, args)
     #return
@@ -351,8 +351,8 @@ def requete_print(chemin, args=None, get=False):
 # @param node
 # @param level
 #
-# @return 
-def model(node, level=0):
+# @return
+def model(node, level=0, file=None):
 
     def print_functions(node, indent=''):
         for f in node["functions"]:
@@ -366,12 +366,12 @@ def model(node, level=0):
                 if 'attributes' in a and 'out' in a['attributes'] and a['attributes']['out']:
                     flag = "out "
                 aa += ", " + flag + a['name']
-            print(indent + "function:", f['name'], "(" + aa[2:] + ")")
+            print(indent + "function:", f['name'], "(" + aa[2:] + ")", file=file)
 
     def print_parameters(node, indent=''):
         if 'parameters' in node:
             for p in node['parameters']:
-                print(indent + "parameter:  %-20s : %-10s = '%s'" % (p['name'], p['type'], p['value']))
+                print(indent + "parameter:  %-20s : %-10s = '%s'" % (p['name'], p['type'], p['value']), file=file)
 
 
     # si ce n'est pas un datamodel, on sort
@@ -381,16 +381,16 @@ def model(node, level=0):
 
     o = node['objectInfo']
 
-    print("")
-    print("=========================================== level", level)
-    print("OBJECT NAME: '%s.%s'  (name: %s)" % (o['keyPath'], o['key'], o['name'] ))
+    print("", file=file)
+    print("=========================================== level", level, file=file)
+    print("OBJECT NAME: '%s.%s'  (name: %s)" % (o['keyPath'], o['key'], o['name'] ), file=file)
 
     print_functions(node)
     print_parameters(node)
 
     for i in node:
         if i == "children":
-            #print("has children...", len(node[i]))
+            #print("has children...", len(node[i]), file=file)
             pass
         elif i == "objectInfo":
              pass
@@ -401,14 +401,14 @@ def model(node, level=0):
 
         elif i == "--templateInfo":
             print("templateInfo:")
-            pprint(node[i])
+            pprint.pprint(node[i])
             sys.exit()
 
         elif i == "errors":
             for e in node["errors"]:
-                print(e["error"],  e["info"], e["description"])
+                print(e["error"],  e["info"], e["description"], file=file)
         elif i == "instances":
-            print("-->", i, len(node[i]))
+            print("-->", i, len(node[i]), file=file)
             if i == "instances" and len(node[i])>0:
                 k = 0
                 for j in node[i]:
@@ -419,17 +419,18 @@ def model(node, level=0):
                     #print(j)
                     #model(j, 99)
 
-                    print("instance %d: '%s.%s' (name: %s)" % (k, j['objectInfo']['keyPath'], j['objectInfo']['key'], j['objectInfo']['name']))
+                    print("instance %d: '%s.%s' (name: %s)" % (k, j['objectInfo']['keyPath'], j['objectInfo']['key'], j['objectInfo']['name']), file=file)
                     #print("j=",j)
                     #print("oi=", j['objectInfo'])
                     print_functions(j, indent="    ")
                     print_parameters(j, indent="    ")
                     pass
         else:
-            print("-->", i, len(node[i]))
+            print("-->", i, len(node[i]), file=file)
 
-    for c in node['children']:
-        model(c, level + 1)
+    if 'children' in node:
+        for c in node['children']:
+            model(c, level + 1, file=file)
 
 
 
@@ -437,7 +438,7 @@ def model(node, level=0):
 ##
 # @brief analyse le fichier scripts.js à la recherche de requêtes sysbus
 #
-# @return 
+# @return
 def scan_sysbus(args):
 
     if len(args) > 0:
@@ -479,7 +480,7 @@ def scan_sysbus(args):
         o = re.sub('"(.*)"', r'<o>', o)
         o = re.sub(r'\/', r'.', o)
 
-        if not o in objects: 
+        if not o in objects:
             objects[o] = set()
         objects[o].add(m)
 
@@ -490,7 +491,7 @@ def scan_sysbus(args):
 ##
 # @brief crée l'arborescence des scripts javascript de la Livebox à partir de scripts.js
 #
-# @return 
+# @return
 def extract_files(args):
 
     if os.path.exists("scripts.js"):
@@ -539,7 +540,7 @@ def extract_files(args):
 #   http://www.graphviz.org/
 #   http://graphviz.readthedocs.org/
 #
-# @return 
+# @return
 def load_graphviz():
     try:
         from graphviz import Digraph as dg
@@ -558,7 +559,7 @@ def load_graphviz():
 # @param prof
 # @param out
 #
-# @return 
+# @return
 def model_raw_cmd(chemin, prof=None, out=None):
 
     r = requete(chemin, prof, get=True, raw=True)
@@ -662,7 +663,7 @@ class uml_model:
             o = child['objectInfo']
             #assert(o['indexPath'] == o['keyPath'])
             assert(o['state'] == "ready")
-           
+
             name = o['key']
             path = o['keyPath'] + "." + name
 
@@ -688,11 +689,11 @@ class uml_model:
 
 
 ##
-# @brief 
+# @brief
 #
 # @param filename
 #
-# @return 
+# @return
 def open_file_in_os(filename):
     if sys.platform.startswith('darwin'):
         subprocess.call(['open', filename])
@@ -703,13 +704,13 @@ def open_file_in_os(filename):
 
 
 ##
-# @brief 
+# @brief
 #
 # @param chemin
 # @param prof
 # @param out
 #
-# @return 
+# @return
 def model_uml_cmd(chemin, prof=None, out=None):
 
     model = requete(chemin, prof, get=True, raw=True)
@@ -775,7 +776,7 @@ def model_uml_cmd(chemin, prof=None, out=None):
 #
 # @param output_html
 #
-# @return 
+# @return
 def MIBs_table_cmd(output_html=False):
     intf = set()
     mibs = set()
@@ -839,7 +840,7 @@ table#t01 td:nth-child(1)	{
 
     border-color: darkblue;
     border-width: 1px;
-    border-style: solid; 
+    border-style: solid;
     position: absolute;
     color: darkblue;
     background-color: white;
@@ -901,7 +902,7 @@ function fenetre_close() {
                 if i in r[m]:
                     if len(r[m][i]) == 0:
                         # MIB déclarée pour l'interface mais vide
-                        x = "0"     
+                        x = "0"
                     else:
                         # il y a des valeurs pour la MIB
                         # cellule cliquable pour afficher les détails
@@ -914,7 +915,7 @@ function fenetre_close() {
                     # MIB absente pour l'interface
                     x = ""
                 print('    <td onclick="%s">%s</td>' % (action, x))
-            
+
             print('  </tr>')
         print('  </table>')
 
@@ -950,10 +951,10 @@ function fenetre_close() {
                 if i in r[m]:
                     if len(r[m][i]) == 0:
                         # MIB déclarée pour l'interface mais vide
-                        x = "0"     
+                        x = "0"
                     else:
                         # il y a des valeurs pour la MIB
-                        x = "X"     
+                        x = "X"
                 else:
                     # MIB absente pour l'interface
                     x = ""
@@ -966,7 +967,7 @@ function fenetre_close() {
 ##
 # @brief dumpe toutes les MIBs dans un sous-répertoire mibs au format pretty print Python et décodé
 #
-# @return 
+# @return
 def MIBs_save_cmd():
     # liste toutes les interfaces
     intf = set()
@@ -1017,6 +1018,8 @@ def requete_object(path):
                     o[p['name']] = int(p['value'])
                 elif p['type'] == 'date_time':
                     o[p['name']] = p['value']
+                elif p['type'] == 'bool':
+                    o[p['name']] = (p['value'].lower() == "true")
                 else:
                     print("unkwown type: ", str(p))
                     sys.exit()
@@ -1060,7 +1063,7 @@ def livebox_info():
         print("%20s : %s" % ("IPv4Address", result['status']))
 
         # ni d'adresse IPv6
-        result = requete("NMC.IPv6:get") 
+        result = requete("NMC.IPv6:get")
         print("%20s : %s" % ("IPv6Address", result['data']['IPv6Address']))
 
         result = requete("NMC:getWANStatus")
@@ -1083,7 +1086,7 @@ def livebox_info():
 #
 # @param parser
 #
-# @return 
+# @return
 def add_singles(parser):
 
     cmds = [
@@ -1104,21 +1107,21 @@ def add_singles(parser):
     for i in cmds:
         parser.add_argument('-' + i[0], help=i[1], dest='req_auth', action='store_const', const=i[2])
 
-        
+
 ##
 # @brief mes commandes
 #
 # @param parser
 #
-# @return 
+# @return
 def add_commands(parser):
 
     cmds = [
         [ "wpson", "active le (WPS) Wi-Fi Protected Setup",
-                    [ "NeMo.Intf.wl0:setWLANConfig", 
+                    [ "NeMo.Intf.wl0:setWLANConfig",
                       {"mibs":{"wlanvap":{"wl0":{"WPS":{"Enable":True}},"wl1":{"WPS":{"Enable":True}}}}} ] ],
         [ "wpsoff", "désactive le (WPS) Wi-Fi Protected Setup",
-                    [ "NeMo.Intf.wl0:setWLANConfig", 
+                    [ "NeMo.Intf.wl0:setWLANConfig",
                       {"mibs":{"wlanvap":{"wl0":{"WPS":{"Enable":False}},"wl1":{"WPS":{"Enable":False}}}}} ] ],
         [ "version", "affiche la version et détails de la Livebox",
                     [ "DeviceInfo:get" ] ],
@@ -1150,9 +1153,11 @@ def add_commands(parser):
             m = result['status']['dsl']['dsl0']
             print("Downstream: {:6.2f} Mbit".format(m['DownstreamCurrRate'] / 1024.))
             print("Upstream:   {:6.2f} Mbit".format(m['UpstreamCurrRate'] / 1024.))
+            d = datetime.timedelta(seconds=int(m['LastChange']))
+            print("LastChange: {}".format((datetime.datetime.now() - d).ctime()))
         else:
             print("DSL rate non disponible")
-                
+
 
     #
     def wifi_cmd(args):
@@ -1219,7 +1224,7 @@ def add_commands(parser):
                     requete_print('DHCPv4.Server.Pool.default:deleteStaticLease', {"MACAddress": mac})
         else:
             error("Usage: %s -deldchp MACAddress..." % sys.argv[0])
-        
+
     #
     def hosts_cmd(args):
         """ affiche la liste des hosts """
@@ -1298,31 +1303,31 @@ def add_commands(parser):
 
     #
     def MIBs_cmd(args):
-        """ interroge les MIBs de NeMo.Intf: -MIBs [ nom [ mib ] | show | save | dump ] """
+        """ interroge les MIBs de NeMo.Intf: -MIBs [ nom [ mib ] | show | dump ] """
 
         '''  trouvé dans opensource.orange.com
-- A <b>flag set</b> is a space separated list of flag names. Example: "enabled up".                                             
-- A <b>flag expression</b> is a string in which flag names are combined with the logical operators &&, || and !.                    
-  Subexpressions may be grouped with parentheses.                                                                                
-  The empty string is also a valid flag expression and it evaluates to true by definition. Example: "enabled && up".             
-- Starting at a given Intf, the network stack dependency graph can be traversed in different ways. There are six predefined      
-  <b>traverse modes</b>:                                                                                                         
-  - <b>this</b> consider only the starting Intf.                                                                                 
-  - <b>down</b> consider the entire closure formed by recursively following the LLIntf references.                               
-  - <b>up</b> consider the entire closure formed by recursively following the ULIntf referenes.                                  
-  - <b>down exclusive</b> the same as down, but exclude the starting Intf.                                                       
-  - <b>up exclusive</b> the same as up, but exclude the starting Intf.                                                           
-  - <b>one level down</b> consider only direct LLIntfs.                                                                          
-  - <b>one level up</b> consider only direct ULIntfs.                                                                            
-  - <b>all</b> consider all Intfs.                                                                                              
-  .                                                                                                                                 
-  The resulting structured set of Intfs is called the <b>traverse tree</b>.                                                      
-  Example: if you apply the traverse mode "down" on Intf eth1 which has LLIntfs swport1, swport2 and swport3,                    
-  the traverse tree will consist of eth1, swport1, swport2 and swport3.                                                          
-- Some data model functions accept a parameter and/or a function name as input argument. By extension, they may also accept a    
-  <b>parameter spec</b> and/or <b>function spec</b> as input argument. A parameter/function spec is the concatentation of          
-  the dot-separated key path relative to a NeMo Intf instance and the parameter/function name, separated by an extra dot.        
-  Example: the parameter spec "ReqOption.3.Value" refers to the parameter Value held by the object NeMo.Intf.{i}.ReqOption.3.    
+- A <b>flag set</b> is a space separated list of flag names. Example: "enabled up".
+- A <b>flag expression</b> is a string in which flag names are combined with the logical operators &&, || and !.
+  Subexpressions may be grouped with parentheses.
+  The empty string is also a valid flag expression and it evaluates to true by definition. Example: "enabled && up".
+- Starting at a given Intf, the network stack dependency graph can be traversed in different ways. There are six predefined
+  <b>traverse modes</b>:
+  - <b>this</b> consider only the starting Intf.
+  - <b>down</b> consider the entire closure formed by recursively following the LLIntf references.
+  - <b>up</b> consider the entire closure formed by recursively following the ULIntf referenes.
+  - <b>down exclusive</b> the same as down, but exclude the starting Intf.
+  - <b>up exclusive</b> the same as up, but exclude the starting Intf.
+  - <b>one level down</b> consider only direct LLIntfs.
+  - <b>one level up</b> consider only direct ULIntfs.
+  - <b>all</b> consider all Intfs.
+  .
+  The resulting structured set of Intfs is called the <b>traverse tree</b>.
+  Example: if you apply the traverse mode "down" on Intf eth1 which has LLIntfs swport1, swport2 and swport3,
+  the traverse tree will consist of eth1, swport1, swport2 and swport3.
+- Some data model functions accept a parameter and/or a function name as input argument. By extension, they may also accept a
+  <b>parameter spec</b> and/or <b>function spec</b> as input argument. A parameter/function spec is the concatentation of
+  the dot-separated key path relative to a NeMo Intf instance and the parameter/function name, separated by an extra dot.
+  Example: the parameter spec "ReqOption.3.Value" refers to the parameter Value held by the object NeMo.Intf.{i}.ReqOption.3.
         '''
 
         if len(args) == 0:
@@ -1330,8 +1335,8 @@ def add_commands(parser):
             # récupère toutes les MIBs de toutes les interfaces
             r = requete('NeMo.Intf.data:getMIBs', { "traverse": "all" })
             if r is None: return
-            pprint.pprint(r) 
-            
+            pprint.pprint(r)
+
         else:
 
             if args[0] == "show":
@@ -1419,7 +1424,7 @@ def add_commands(parser):
                 ip = ip['status']['ExternalIPAddress']
 
                 print("règle: %s:%s (externe) <-> %s:%s (interne)" % (ip, r['ExternalPort'], r['DestinationIPAddress'], r['InternalPort']))
-  
+
         else:
             import socket
 
@@ -1522,7 +1527,7 @@ def add_commands(parser):
     #
     # @param args 'simple' pour ne pas afficher les détails
     #
-    # @return 
+    # @return
     def topo_cmd(args):
 
         # charge graphviz
@@ -1540,7 +1545,7 @@ def add_commands(parser):
         r = r['status']
 
         simpleTopo = args[0] == "simple" if len(args) > 0 else False
-        
+
         dot = Digraph(name='Devices', format='svg', engine='dot')
 
         # oriente le graphe de gauche à droite
@@ -1552,7 +1557,7 @@ def add_commands(parser):
         #
         # @param node
         #
-        # @return 
+        # @return
         def traverse(node):
             key = node['Key'].replace(':', '_')
 
@@ -1599,11 +1604,11 @@ def add_commands(parser):
 
 
     ##
-    # @brief 
+    # @brief
     #
     # @param args
     #
-    # @return 
+    # @return
     def calls_cmd(args):
         """ affiche la liste des appels """
         r = requete("VoiceService.VoiceApplication:getCallList")
@@ -1611,13 +1616,13 @@ def add_commands(parser):
         if len(args) == 1 and args[0] == '?':
             return print(r[0].keys())
 
-        
+
         for i in reversed(r):
             if len(args) > 0:
                 print(i[args[0]])
             else:
                 d = datetime.datetime.strptime(i['startTime'], "%Y-%m-%dT%H:%M:%SZ")
-                
+
                 print("{:>3} {:12}   {}  {}   {:10}".format(
                     i['callId'],
                     i['remoteNumber'],
@@ -1643,7 +1648,7 @@ def add_commands(parser):
 # @param sysbus
 # @param args
 #
-# @return 
+# @return
 def par_defaut(sysbus, args, raw=False):
 
     # par défaut, affiche l'heure de la Livebox
@@ -1692,7 +1697,7 @@ def par_defaut(sysbus, args, raw=False):
 ##
 # @brief fonction principale
 #
-# @return 
+# @return
 def main():
     global USER_LIVEBOX, PASSWORD_LIVEBOX, URL_LIVEBOX
     global verbosity
@@ -1761,7 +1766,7 @@ def main():
         args.run(a)
 
     else:
-        if args.noauth: 
+        if args.noauth:
             noauth()                        # initialise la session requests
         else:
             if not auth(new_session):       # initialise la session requests avec authentification
