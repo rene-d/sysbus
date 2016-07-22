@@ -22,6 +22,11 @@ import subprocess
 
 
 ##
+# @brief python 3 est requis
+if sys.version_info.major < 3:
+    raise "Must be using Python 3"
+
+##
 # @brief règle un problème de sortie vers un fichier
 if sys.stdout.encoding is None:
     reload(sys)
@@ -55,6 +60,7 @@ URL_LIVEBOX = 'http://livebox.home/'
 USER_LIVEBOX = 'admin'
 PASSWORD_LIVEBOX = 'admin'
 MINECRAFT_PORT = 54520
+VERSION_LIVEBOX = 'lb4'  
 
 ##
 # @brief niveau de détail, -v pour l'augmenter
@@ -105,6 +111,7 @@ def write_conf(args):
     config['main']['URL_LIVEBOX'] = URL_LIVEBOX
     config['main']['USER_LIVEBOX'] = USER_LIVEBOX
     config['main']['PASSWORD_LIVEBOX'] = PASSWORD_LIVEBOX
+    config['main']['VERSION_LIVEBOX'] = VERSION_LIVEBOX
     config['minecraft'] = {}
     config['minecraft']['port'] = str(MINECRAFT_PORT)
 
@@ -116,6 +123,7 @@ def write_conf(args):
     print("     url = %s" % (URL_LIVEBOX))
     print("    user = %s" % (USER_LIVEBOX))
     print("password = %s" % (PASSWORD_LIVEBOX))
+    print("   model = %s" % (VERSION_LIVEBOX))
 
 
 ##
@@ -123,7 +131,7 @@ def write_conf(args):
 #
 # @return
 def load_conf():
-    global USER_LIVEBOX, PASSWORD_LIVEBOX, URL_LIVEBOX
+    global USER_LIVEBOX, PASSWORD_LIVEBOX, URL_LIVEBOX, VERSION_LIVEBOX
 
     rc = os.path.expanduser("~") + "/" + ".sysbusrc"
     debug(3, 'rc file', rc)
@@ -133,11 +141,12 @@ def load_conf():
         URL_LIVEBOX = config['main']['URL_LIVEBOX']
         USER_LIVEBOX = config['main']['USER_LIVEBOX']
         PASSWORD_LIVEBOX = config['main']['PASSWORD_LIVEBOX']
+        VERSION_LIVEBOX = config['main']['VERSION_LIVEBOX']
         MINECRAFT_PORT = config['minecraft']['port']
     except:
         return False
 
-    debug(2, "%s %s %s" % (USER_LIVEBOX, PASSWORD_LIVEBOX, URL_LIVEBOX))
+    debug(2, "%s %s %s %s" % (USER_LIVEBOX, PASSWORD_LIVEBOX, URL_LIVEBOX, VERSION_LIVEBOX))
     return True
 
 
@@ -1192,36 +1201,53 @@ def add_commands(parser):
     #
     def dhcp_cmd(args):
         """ affiche la table des DHCP statiques """
-        requete_print("DHCPv4.Server.Pool.default:getStaticLeases")
+        if VERSION_LIVEBOX == 'lb28':
+            dhcpv4_object = 'NMC'
+        else:
+            dhcpv4_object = 'DHCPv4.Server.Pool.default'
+        requete_print(dhcpv4_object + ":getStaticLeases")
 
     #
     def adddhcp_cmd(args):
         """ ajoute une entrée DHCP statique """
+
+        if VERSION_LIVEBOX == 'lb28':
+            dhcpv4_object = 'NMC'
+        else:
+            dhcpv4_object = 'DHCPv4.Server.Pool.default'
+
         if len(args) == 2:
             mac = str.upper(args[0])
             name = args[1]
             print("set dhcp", mac, name)
 
-            requete_print('DHCPv4.Server.Pool.default:addStaticLease',
-                {"MACAddress": mac ,"IPAddress":  name })
+            requete_print(dhcpv4_object + ':addStaticLease', {"MACAddress": mac ,"IPAddress":  name })
         else:
             error("Usage: %s -adddchp MACAddress IPAddress" % sys.argv[0])
 
     #
     def deldhcp_cmd(args):
         """ supprime une entrée DHCP statique """
+
+        if VERSION_LIVEBOX == 'lb28':
+            dhcpv4_object = 'NMC'
+        else:
+            dhcpv4_object = 'DHCPv4.Server.Pool.default'
+
         if len(args) >= 1:
+            leases = requete(dhcpv4_object + ':getStaticLeases')
             if args[0] == "all":
-                leases = requete('DHCPv4.Server.Pool.default:getStaticLeases')
                 for lease in leases['status']:
                     mac = lease['MACAddress']
-                    requete_print('DHCPv4.Server.Pool.default:deleteStaticLease', {"MACAddress": mac})
+                    requete_print(dhcpv4_object + ':deleteStaticLease', {"MACAddress": mac})
 
             else:
                 for i in args:
-                    mac = str.upper(i)
-                    print("del dhcp", mac)
-                    requete_print('DHCPv4.Server.Pool.default:deleteStaticLease', {"MACAddress": mac})
+                    for lease in leases['status']:
+                        mac = lease['MACAddress']
+                        if str.upper(mac) == str.upper(i):
+                            print("del dhcp", mac)
+                            requete_print(dhcpv4_object + ':deleteStaticLease', {"MACAddress": mac})
         else:
             error("Usage: %s -deldchp MACAddress..." % sys.argv[0])
 
@@ -1699,7 +1725,7 @@ def par_defaut(sysbus, args, raw=False):
 #
 # @return
 def main():
-    global USER_LIVEBOX, PASSWORD_LIVEBOX, URL_LIVEBOX
+    global USER_LIVEBOX, PASSWORD_LIVEBOX, URL_LIVEBOX, VERSION_LIVEBOX
     global verbosity
 
     parser = argparse.ArgumentParser(description='requêtes sysbus pour Livebox')
