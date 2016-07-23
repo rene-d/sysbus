@@ -100,6 +100,12 @@ def debug(level, *args):
         sys.stderr.write(END)
         sys.stderr.write('\n')
 
+def debug_ts(level, *args):
+    if verbosity >= level + 1:
+        s = datetime.datetime.now().isoformat() + ' ' +  ' '.join(args)
+        debug(level, s)
+    else:
+        debug(level, *args)
 
 ##
 # @brief écrit le fichier de configuration
@@ -270,7 +276,7 @@ def requete(chemin, args=None, get=False, raw=False, silent=False):
         else:
             c += "?_restDepth="  + str(args)
 
-        debug(1, "requête: %s" % (c))
+        debug_ts(1, "requête: %s" % (c))
         t = session.get(URL_LIVEBOX + c, headers=sah_headers)
         t = t.content
         #t = b'[' + t.replace(b'}{', b'},{')+b']'
@@ -294,7 +300,7 @@ def requete(chemin, args=None, get=False, raw=False, silent=False):
         c = 'ws'
 
         # envoie la requête avec les entêtes qui vont bien
-        debug(1, "requête: %s with %s" % (c, str(data)))
+        debug_ts(1, "requête: %s with %s" % (c, str(data)))
         t = session.post(URL_LIVEBOX + c, headers=sah_headers, data=json.dumps(data))
         t = t.content
 
@@ -321,7 +327,7 @@ def requete(chemin, args=None, get=False, raw=False, silent=False):
     apercu = str(r)
     if len(apercu) > 50:
         apercu = apercu[:50] + "..."
-    debug(1, "réponse:", apercu)
+    debug_ts(1, "réponse:", apercu)
 
     if not get and 'result' in r:
         if not 'errors' in r['result']:
