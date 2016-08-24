@@ -102,7 +102,47 @@ def debug(level, *args):
 
 
 ##
+# @brief lit l'ip et l'adresse MAC de la livebox à partir du nom dns 'livebox.home'
+#
+# @return ip, mac
+def get_livebox_ip_mac():
+    p = subprocess.check_output(['arp', '-n', 'livebox.home'], universal_newlines=True)
+
+    # cherche xxx.yyy.zzz.ttt
+    ip = re.search('(\d{1,3}(\.\d{1,3}){3})', p)
+    if ip is None:
+        return
+
+    # cherche XX:XX:XX:XX:XX:XX (ou xx-xx-...)
+    eth = re.search('([\dA-Fa-f]{1,2}(?:[-:][\dA-Fa-f]{1,2}){5})', p)
+    if eth is None:
+        return ip.group(0), None
+
+    return ip.group(0), eth.group(0)
+
+
+##
+# @brief compare deux adresses MAC. Si une est mal formatée, retourne False
+#
+# @param a
+# @param b
+#
+# @return 
+def compare_mac(a, b):
+    m = re.findall('([a-fA-F\d]{1,2})[:-]?', a)
+    if len(m) != 6: return False
+    a = [ int(x, 16) for x in m ]
+
+    m = re.findall('([a-fA-F\d]{1,2})[:-]?', b)
+    if len(m) != 6: return False
+    b = [ int(x, 16) for x in m ]
+
+    return a == b
+
+
+##
 # @brief écrit le fichier de configuration
+#        TODO à réécrire pour tenir compte du flag "auto"
 #
 # @return
 def write_conf(args):
@@ -131,18 +171,41 @@ def write_conf(args):
 #
 # @return
 def load_conf():
-    global USER_LIVEBOX, PASSWORD_LIVEBOX, URL_LIVEBOX, VERSION_LIVEBOX
+    global USER_LIVEBOX, PASSWORD_LIVEBOX, URL_LIVEBOX, VERSION_LIVEBOX, MINECRAFT_PORT 
 
     rc = os.path.expanduser("~") + "/" + ".sysbusrc"
     debug(3, 'rc file', rc)
     config = configparser.ConfigParser()
     try:
         config.read(rc)
+
         URL_LIVEBOX = config['main']['URL_LIVEBOX']
         USER_LIVEBOX = config['main']['USER_LIVEBOX']
         PASSWORD_LIVEBOX = config['main']['PASSWORD_LIVEBOX']
         VERSION_LIVEBOX = config['main']['VERSION_LIVEBOX']
+
         MINECRAFT_PORT = config['minecraft']['port']
+        
+        if config['main']['auto'].lower() in ['true', 'yes', '1']:
+            ip, eth = get_livebox_ip_mac()
+            if ip and eth:
+                for i in config.sections():
+                    if compare_mac(i, eth):
+                        if 'URL_LIVEBOX' in config[i]:
+                            URL_LIVEBOX = config[i]['URL_LIVEBOX'] 
+                        else:
+                            URL_LIVEBOX = "http://{}/".format(ip)
+                        if 'USER_LIVEBOX' in config[i]:
+                            USER_LIVEBOX = config[i]['USER_LIVEBOX']
+                        if 'PASSWORD_LIVEBOX' in config[i]:
+                            PASSWORD_LIVEBOX = config[i]['PASSWORD_LIVEBOX']
+                        if 'VERSION_LIVEBOX' in config[i]:
+                            VERSION_LIVEBOX = config[i]['VERSION_LIVEBOX']
+
+                        debug(1, "using auto detect for MAC %s (%s)" % (eth, config.get(i, 'location', fallback='unknown')))
+
+                        break
+
     except:
         return False
 
@@ -1642,10 +1705,12 @@ def add_commands(parser):
     def calls_cmd(args):
         """ affiche la liste des appels """
         r = requete("VoiceService.VoiceApplication:getCallList")
+        if r is None or not 'status' in r:
+            return
+
         r = r['status']
         if len(args) == 1 and args[0] == '?':
             return print(r[0].keys())
-
 
         for i in reversed(r):
             if len(args) > 0:
