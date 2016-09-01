@@ -1136,7 +1136,8 @@ def livebox_info():
 
         # pas d'objet Devices dans la Livebox 2
         result = requete("Devices.Device.lan:getFirstParameter", { "parameter": "IPAddress" }, silent=True)
-        print("%20s : %s" % ("IPv4Address", result['status']))
+        if 'status' in result:
+            print("%20s : %s" % ("IPv4Address", result['status']))
 
         # ni d'adresse IPv6
         result = requete("NMC.IPv6:get")
