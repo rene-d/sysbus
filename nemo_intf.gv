@@ -1,0 +1,122 @@
+digraph "NeMo.Intf" {
+	node [fontname=Helvetica]
+	vlan_iptv2 [color=lightgrey shape=box]
+	wifi0_ath [shape=box]
+	atm_iptv2 [shape=box]
+	iptv [color=lightgrey shape=ellipse]
+	lan [shape=box]
+	bridge_aiptv [color=lightgrey shape=box]
+	vlan_iptv1 [color=lightgrey shape=box]
+	atm_iptv3 [shape=box]
+	bridge_viptv [color=lightgrey shape=box]
+	bridge [shape=box]
+	dhcp_voip [color=lightgrey shape=box]
+	data [shape=box]
+	lo [shape=box]
+	dhcpv6_multi [color=lightgrey shape=ellipse]
+	gretap_wfc2 [color=lightgrey shape=box]
+	swport2 [shape=box]
+	swport1 [shape=box]
+	atm_iptv4 [shape=box]
+	wl2 [color=lightgrey shape=box]
+	wl3 [color=lightgrey shape=box]
+	gretap_wfc1 [color=lightgrey shape=box]
+	ezp [color=lightgrey shape=box]
+	vlan_data [shape=box]
+	dsl0 [shape=box]
+	wfc [color=lightgrey shape=box]
+	vlan_multi [shape=box]
+	ppp_data [shape=box]
+	bridge_vmulti [color=lightgrey shape=box]
+	atm_iptv1 [shape=box]
+	wl1 [color=lightgrey shape=box]
+	wfc_vlan [color=lightgrey shape=box]
+	swport4 [shape=box]
+	bridge_wfcsec [color=lightgrey shape=box]
+	wfcsec_vlan [color=lightgrey shape=box]
+	wfcsec [color=lightgrey shape=box]
+	vlan_voip [color=lightgrey shape=box]
+	wl0 [shape=box]
+	eth1 [color=lightgrey shape=box]
+	atm_multi [shape=box]
+	dhcp_iptv [color=lightgrey shape=box]
+	voip [shape=box]
+	atm_voip [shape=box]
+	bridge_wfc [color=lightgrey shape=box]
+	eth0 [shape=box]
+	primdata [color=lightgrey shape=box]
+	wwan [color=lightgrey shape=box]
+	swport3 [shape=box]
+	dhcp_multi [color=lightgrey shape=ellipse]
+	atm_data [shape=box]
+		vlan_iptv2 -> eth1
+		wifi0_ath -> Name
+		atm_iptv2 -> dsl0
+		atm_iptv2 -> Name
+		iptv -> dhcp_iptv
+		iptv -> Name
+		lan -> bridge
+		lan -> Name
+		bridge_aiptv -> atm_iptv1
+		bridge_aiptv -> atm_iptv4
+		bridge_aiptv -> atm_iptv2
+		bridge_aiptv -> atm_iptv3
+		vlan_iptv1 -> eth1
+		atm_iptv3 -> dsl0
+		atm_iptv3 -> Name
+		bridge_viptv -> vlan_iptv2
+		bridge_viptv -> vlan_iptv1
+		bridge -> eth0
+		bridge -> wl0
+		bridge -> Name
+		dhcp_voip -> atm_voip
+		data -> primdata
+		data -> Name
+		lo -> Name
+		dhcpv6_multi -> Name
+		swport2 -> Name
+		swport1 -> Name
+		atm_iptv4 -> dsl0
+		atm_iptv4 -> Name
+		wl2 -> wifi0_ath
+		wl3 -> wifi0_ath
+		ezp -> wl2
+		vlan_data -> eth1
+		vlan_data -> Name
+		dsl0 -> Name
+		wfc -> wl1
+		vlan_multi -> eth1
+		vlan_multi -> Name
+		ppp_data -> atm_data
+		ppp_data -> Name
+		bridge_vmulti -> vlan_multi
+		atm_iptv1 -> dsl0
+		atm_iptv1 -> Name
+		wl1 -> wifi0_ath
+		swport4 -> Name
+		bridge_wfcsec -> wfcsec_vlan
+		bridge_wfcsec -> wl3
+		wfcsec -> wl3
+		vlan_voip -> eth1
+		wl0 -> wifi0_ath
+		wl0 -> Name
+		atm_multi -> dsl0
+		atm_multi -> Name
+		dhcp_iptv -> bridge_aiptv
+		voip -> dhcp_voip
+		voip -> Name
+		atm_voip -> dsl0
+		atm_voip -> Name
+		bridge_wfc -> wl1
+		bridge_wfc -> wfc_vlan
+		eth0 -> swport2
+		eth0 -> swport1
+		eth0 -> swport3
+		eth0 -> swport4
+		eth0 -> Name
+		primdata -> ppp_data
+		swport3 -> Name
+		dhcp_multi -> Name
+		atm_data -> dsl0
+		atm_data -> Name
+}

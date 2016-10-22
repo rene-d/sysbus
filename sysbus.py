@@ -1149,10 +1149,11 @@ def livebox_info():
             print("%20s : %s" % ("IPv6Address", result['data']['IPv6Address']))
 
     result = requete("VoiceService.VoiceApplication:listTrunks")
-    for i in result['status']:
-        for j in i['trunk_lines']:
-            if j['enable'] == "Enabled":
-                print("%20s : %s" % ("directoryNumber", j['directoryNumber']))
+    if 'status' in result:
+        for i in result['status']:
+            for j in i['trunk_lines']:
+                if j['enable'] == "Enabled":
+                    print("%20s : %s" % ("directoryNumber", j['directoryNumber']))
 
     #result = requete("Time:getTime")
     #print("%20s : %s" % ("Time", result['data']['time']))
