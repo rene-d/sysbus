@@ -261,9 +261,21 @@ def auth(new_session=False):
             debug(1, "new session")
             session = requests.Session()
 
-            auth = { 'username':USER_LIVEBOX, 'password':PASSWORD_LIVEBOX }
-            debug(2, "auth with", str(auth))
-            r = session.post(URL_LIVEBOX + 'authenticate', params=auth)
+            debug(2, "auth for", VERSION_LIVEBOX)
+            if VERSION_LIVEBOX != 'lb4':
+                auth = { 'username':USER_LIVEBOX, 'password':PASSWORD_LIVEBOX }
+                debug(2, "auth with", str(auth))
+                r = session.post(URL_LIVEBOX + 'authenticate', params=auth)
+                debug(2, "auth return", r.text)
+            else:
+                # la mise à jour 2.19.2 de janvier 2017 a introduit un nouveau mécanisme d'authentification
+                # de plus, la donnée n'est certainement pas parsée en tant que JSON mais comme chaine de caractères
+                # car si le formalisme change un peu l'authentification échoue
+                auth = '{"service":"sah.Device.Information","method":"createContext","parameters":{"applicationName":"so_sdkut","username":"%s","password":"%s"}}' % (USER_LIVEBOX, PASSWORD_LIVEBOX)
+                sah_headers = { 'Content-Type':'application/x-sah-ws-1-call+json', 'Authorization':'X-Sah-Login' }
+                debug(2, "auth with", str(auth))
+                r = session.post(URL_LIVEBOX + 'ws', data=auth, headers=sah_headers)
+                debug(2, "auth return", r.text)
 
             if not 'contextID' in r.json()['data']:
                 error("auth error", str(r.text))
