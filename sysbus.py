@@ -1192,6 +1192,10 @@ def add_singles(parser):
 #        [ "macon", "", [ "NeMo.Intf.wl0:setWLANConfig", {"mibs":{"wlanvap":{"wl0":{"MACFiltering":{"Mode":"WhiteList"}}}}} ] ],
 #        [ "macoff", "", [ "NeMo.Intf.wl0:setWLANConfig", {"mibs":{"wlanvap":{"wl0":{"MACFiltering":{"Mode":"Off"}}}}} ] ],
         [ "devices", "", "Hosts:getDevices" ],
+        [ "guestwifion", "Active le Wifi invité uniquement", [ "NMC.Guest:set", { "Enable":True } ] ],
+        [ "guestwifioff", "Désactive le Wifi invité uniquement", [ "NMC.Guest:set", { "Enable":False } ] ],
+        [ "privatewifioff", "Désactive le Wifi privé uniquement", [ "NeMo.Intf.lan:setWLANConfig", {"mibs":{"penable":{"wl0":{"Enable":False,"PersistentEnable":False,"Status":False},"eth6":{"Enable":False,"PersistentEnable":False,"Status":False}},"wlanvap":{"wl0":{},"eth6":{}}}} ] ],
+        [ "privatewifion", "Active le Wifi privé uniquement", [ "NeMo.Intf.lan:setWLANConfig", {"mibs":{"penable":{"wl0":{"Enable":True,"PersistentEnable":True,"Status":True},"eth6":{"Enable":True,"PersistentEnable":True,"Status":True}},"wlanvap":{"wl0":{},"eth6":{}}}} ] ],
     ]
 
     for i in cmds:
