@@ -1730,14 +1730,19 @@ def add_commands(parser):
         if len(args) == 1 and args[0] == '?':
             return print(r[0].keys())
 
-        for i in reversed(r):
+        for i in r:
             if len(args) > 0:
                 print(i[args[0]])
             else:
                 d = datetime.datetime.strptime(i['startTime'], "%Y-%m-%dT%H:%M:%SZ")
 
-                print("{:>3} {:12}   {}  {}   {:10}".format(
+                if i['callOrigin'] == 'local':
+                    arrow = '<=='
+                else:
+                    arrow = '==>'
+                print("{:>3} {} {:16}  {}  {}  {:10}".format(
                     i['callId'],
+                    arrow,
                     i['remoteNumber'],
                     d,
                     str(datetime.timedelta(seconds=int(i['duration']))),
