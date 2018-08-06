@@ -17,11 +17,13 @@ Cela devrait fonctionner également avec Windows. Se référer aux sites des dif
 
 La plupart des requêtes requiert une authentification. C'est l'utilisateur `admin` et le mot de passe d'administration (par défaut les 8 premiers caractères de la clé Wi-Fi).
 
-Le script mémorise le mot de passe (et l'adresse de la Livebox si on n'utilise pas celle par défaut) dans le fichier `~/.sysbusrc`.
+Le script mémorise le mot de passe (ainsi que l'adresse de la Livebox et sa version si l'on n'utilise pas les valeurs par défaut) dans le fichier `~/.sysbusrc`.  
+
+La version de la livebox vaut par défaut `lb4` (Livebox 4) mais peut être remplacée (`lb3` par exemple) après l'argument `-lversion`.  
 
 Pour configurer, taper la commande suivante (en admettant que le mot de passe soit SECRET):
 
-    $ ./sysbus.py -config -password SECRET [ -url http://192.168.1.1/ ]
+    $ ./sysbus.py -config -password SECRET [ -url http://192.168.1.1/ ] [ -lversion lb4 ]
 
 Dorénavant, le script utilisera ces informations de connexion à chaque fois. On peut tester en demandant l'heure de l'équipement:
 
@@ -58,8 +60,8 @@ Il est raisonnable de penser que c'est également par cette voie qu'Orange admin
 API utilisée par les Livebox 4 (firmware SG40_sip-fr-2.14.8.1_7.21.3.1), qui fonctionne avec les Livebox 3 (avec le firmware SG30_sip-fr-5.17.3.1 au moins):
 
     $ curl -s -X POST -H "Content-Type: application/x-sah-ws-1-call+json" -d '{"service":"NMC","method":"getWANStatus","parameters":{}}' http://192.168.1.1/ws
-    
-API utilisée par les précédents Livebox ainsi que les applications mobiles: 
+
+API utilisée par les précédents Livebox ainsi que les applications mobiles:
 
     $ curl -s -X POST -H "Content-Type: application/json" -d '{"parameters":{}}' http://192.168.1.1/sysbus/NMC:getWANStatus | jq .
 
@@ -84,7 +86,7 @@ Résultat :
       }
     }
 
-[jq](https://stedolan.github.io/jq/) est un outil qui permet entre autres de 
+[jq](https://stedolan.github.io/jq/) est un outil qui permet entre autres de
 reformater le JSON.
 
 Nota: cette requête ne requiert pas d'authentification, contrairement à la demande d'heure.
@@ -147,7 +149,7 @@ L'interface web de la LB4 est beaucoup plus évoluée. Le datamodel est sensible
 On y trouve aussi une description des méthodes via des requêtes Json :
 
     curl -s http://livebox.home/sdkut/apis/pcb/Time/getTime.json | jq .
-    
+
 
 ## Le graphe NeMo.Intf
 
@@ -166,7 +168,7 @@ Le graphe s'affiche en SVG, ce qui est permet de zoomer sans perte. C'est modifi
 Chaque interface gère une ou plusieurs MIBs. La liste peut être extraite avec la commande :
 
     $ ./sysbus.py -MIBs show
-    
+
 Les MIB (_Management Information Base_) sont apparemment proches des MIB SNMP, sans toutefois en être - ou alors ce sont des MIB propriétaires et inaccessibles en SNMP. C'est la MIB nommée `base` qui est exploitée pour construire le graphe.
 
     $ ./sysbus.py NeMo.Intf.wl1:getMIBs mibs=base traverse=this
