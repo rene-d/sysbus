@@ -1837,6 +1837,7 @@ def main():
     parser.add_argument('-url', help="url de la Livebox")
     parser.add_argument('-user', help="user de la Livebox")
     parser.add_argument('-password', help="password de la Livebox")
+    parser.add_argument('-lversion', help="version de la Livebox (lb4, lb3, ...)")
 
     # mémorise et affiche la conf
     parser.add_argument('-config', help="écrit la configuration dans ~/.sysbusrc",
@@ -1869,6 +1870,8 @@ def main():
     if args.url:
         URL_LIVEBOX = args.url
         if URL_LIVEBOX[-1] != "/": URL_LIVEBOX += "/"
+    if args.lversion:
+        VERSION_LIVEBOX = args.lversion
     if args.user:
         USER_LIVEBOX = args.user
         new_session = True          # ne charge pas le fichier des cookies
