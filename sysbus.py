@@ -1261,6 +1261,31 @@ def add_commands(parser):
             c = r['status']['wlanvap'][wl]
             print(wl, c['BSSID'], c['SSID'], c['Security']['KeyPassPhrase'], c['Security']['ModeEnabled'])
 
+    def qrcode_cmd(args):
+        """ affiche les passphrases Wi-Fi en qrcode """
+        try:
+            import qrcode
+        except ImportError:
+            print("Module qrcode non trouvé: pip3 install qrcode")
+            exit(2)
+        qr = qrcode.QRCode(version=1,
+                           error_correction=qrcode.constants.ERROR_CORRECT_L,
+                           box_size=10,
+                           border=4)
+
+        last_passphrase = None
+        r = requete("NeMo.Intf.lan:getMIBs")
+        for wl in r['status']['wlanvap']:
+            c = r['status']['wlanvap'][wl]
+            passphrase =  c['Security']['KeyPassPhrase']
+            print(wl, c['BSSID'], c['SSID'], passphrase, c['Security']['ModeEnabled'])
+            if last_passphrase != passphrase:
+                last_passphrase = passphrase
+                qr.clear()
+                qr.add_data(passphrase)
+                qr.make(fit=True)
+                qr.print_ascii(tty=True)
+
     #
     def setname_cmd(args):
         if len(args) < 2:
