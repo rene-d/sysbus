@@ -1365,6 +1365,8 @@ def add_commands(parser):
     def hosts_cmd(args):
         """ affiche la liste des hosts """
         r = requete("Hosts:getDevices")
+        if not r:
+            return
         if len(args) > 0:
             for i in range(0, len(args)):
                 for host in r['status']:
