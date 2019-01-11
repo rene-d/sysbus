@@ -1191,7 +1191,7 @@ def add_singles(parser):
         [ "wifioff", "", [ "NMC.Wifi:set", { "Enable":False, "Status":False } ] ],
 #        [ "macon", "", [ "NeMo.Intf.wl0:setWLANConfig", {"mibs":{"wlanvap":{"wl0":{"MACFiltering":{"Mode":"WhiteList"}}}}} ] ],
 #        [ "macoff", "", [ "NeMo.Intf.wl0:setWLANConfig", {"mibs":{"wlanvap":{"wl0":{"MACFiltering":{"Mode":"Off"}}}}} ] ],
-        [ "devices", "", "Hosts:getDevices" ],
+        [ "devices", "", "Devices:get" ],
         [ "guestwifion", "Active le Wifi invité uniquement", [ "NMC.Guest:set", { "Enable":True } ] ],
         [ "guestwifioff", "Désactive le Wifi invité uniquement", [ "NMC.Guest:set", { "Enable":False } ] ],
         [ "privatewifioff", "Désactive le Wifi privé uniquement", [ "NeMo.Intf.lan:setWLANConfig", {"mibs":{"penable":{"wl0":{"Enable":False,"PersistentEnable":False,"Status":False},"eth6":{"Enable":False,"PersistentEnable":False,"Status":False}},"wlanvap":{"wl0":{},"eth6":{}}}} ] ],
@@ -1364,29 +1364,24 @@ def add_commands(parser):
     #
     def hosts_cmd(args):
         """ affiche la liste des hosts """
-        r = requete("Hosts:getDevices")
+        r = requete("Hosts.Host:get")
         if not r:
             return
         if len(args) > 0:
             for i in range(0, len(args)):
-                for host in r['status']:
-                    if host['physAddress'].lower() == args[i].lower():
+                for _, host in r['status'].items():
+                    if host['MACAddress'].lower() == args[i].lower():
                         pprint.pprint(host)
-                    elif host['clientID'].lower() == args[i].lower():
+                    elif host['HostName'].lower() == args[i].lower():
                         pprint.pprint(host)
-                    elif host['ipAddress'] == args[i]:
+                    elif host['IPAddress'] == args[i]:
                         pprint.pprint(host)
         else:
             #pprint.pprint(r['status'])
-            for host in r['status']:
-                actif = " " if host['active'] else "*"
-                s = "%-18s %-5s %c %-30s" % (host['physAddress'], host['layer2Interface'], actif, host['hostName'])
-                if 'addresses' in host and len(host['addresses']) > 0:
-                    for a in host['addresses']:
-                        print("{} {}".format(s, a['ipAddress']))
-                        s = " " * len(s)
-                else:
-                    print(s)
+            for _, host in r['status'].items():
+                actif = " " if host['Active'] else "*"
+                s = "%-18s %-15s %c %-35s %s" % (host['MACAddress'], host['InterfaceType'], actif, host['HostName'], host['IPAddress'])
+                print(s)
 
     #
     def ipv6_cmd(args):
