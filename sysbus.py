@@ -1253,13 +1253,13 @@ def add_commands(parser):
             print("DSL rate non disponible")
 
 
-    #
     def wifi_cmd(args):
         """ affiche les passphrases des réseaux Wi-Fi """
-        r = requete("NeMo.Intf.lan:getMIBs")
-        for wl in r['status']['wlanvap']:
-            c = r['status']['wlanvap'][wl]
-            print(wl, c['BSSID'], c['SSID'], c['Security']['KeyPassPhrase'], c['Security']['ModeEnabled'])
+        r = requete('NeMo.Intf.data:getMIBs', { "traverse": "all" })
+        for wl, c in r['status']['wlanvap'].items():
+            if 'BSSID' in c:
+                print(wl, c['BSSID'], c['SSID'], c['Security']['KeyPassPhrase'], c['Security']['ModeEnabled'])
+
 
     def qrcode_cmd(args):
         """ affiche les passphrases Wi-Fi en qrcode """
@@ -1468,7 +1468,8 @@ def add_commands(parser):
             # récupère toutes les MIBs de toutes les interfaces
             r = requete('NeMo.Intf.data:getMIBs', { "traverse": "all" })
             if r is None: return
-            pprint.pprint(r)
+            # pprint.pprint(r)
+            print(json.dumps(r, indent=4))
 
         else:
 
