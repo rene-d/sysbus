@@ -1,4 +1,7 @@
 # sysbus.py
+
+[🇬🇧 English version 🇺🇸](README.en.md) (thanks to [gitchomik](http://github.com/gitchomik/sysbus)).
+
 `sysbus.py` est un script écrit Python 3 qui permet de contrôler une Livebox par programme et d'en explorer les possibilités de contrôle et autres informations masquées. C'est un outil « expérimental ».
 
 Il n'y a - malheureusement - aucune information cachée croustillante à découvrir, ou alors je n'ai rien trouvé. La Livebox est suffisamment bien fermée.
@@ -9,9 +12,11 @@ Le script est écrit en [Python 3](https://www.python.org/downloads/). Il requie
 
     $  pip3 install requests graphviz
 
-Il faudra également installer le moteur Graphviz. Sur OSX on peut utiliser [brew](http://brew.sh). Sur Linux, `sudo apt-get install graphviz` ou équivalent selon la distribution.
+Il faudra également installer le moteur Graphviz. Sur macOS, on peut utiliser [brew](http://brew.sh). Sur Linux, `sudo apt-get install graphviz` ou équivalent selon la distribution.
 
 Cela devrait fonctionner également avec Windows. Se référer aux sites des différents logiciels pour les procédures d'installation.
+
+[manuf.py](http://github.com/coolbho3k/manuf) permet d'afficher l'[OUI](https://fr.wikipedia.org/wiki/Organizationally_Unique_Identifier) à partir des adresses [MAC](https://fr.wikipedia.org/wiki/Adresse_MAC). La base de données `manuf` peut être mise à jour manuellement avec `./manuf.py -u`. 
 
 ## Configuration
 
