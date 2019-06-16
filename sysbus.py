@@ -54,6 +54,13 @@ except ImportError as e:
     sys.exit(2)
 
 
+try:
+    from manuf import MacParser
+    mac_parser = MacParser()
+except ImportError:
+    mac_parser = None
+
+
 ##
 # @brief informations de connexion à la Livebox
 URL_LIVEBOX = 'http://livebox.home/'
@@ -1380,7 +1387,10 @@ def add_commands(parser):
             #pprint.pprint(r['status'])
             for _, host in r['status'].items():
                 actif = " " if host['Active'] else "*"
-                s = "%-18s %-15s %c %-35s %s" % (host['MACAddress'], host['InterfaceType'], actif, host['HostName'], host['IPAddress'])
+                if mac_parser is None:
+                    s = "%-18s %-15s %c %-35s %s" % (host['MACAddress'], host['InterfaceType'], actif, host['HostName'], host['IPAddress'])
+                else:
+                    s = "%-18s %-12s %-15s %c %-35s %s" % (host['MACAddress'], mac_parser.get_manuf(host['MACAddress']), host['InterfaceType'], actif, host['HostName'], host['IPAddress'])
                 print(s)
 
     #
