@@ -14,8 +14,5 @@ deploy:
     secure: DZmpKI7TkPg0CWRCNqeMKAF1LPVOJKx9+I0eEwyc3izKgA8Xc99lXkr1KrcsnaG2oV6qTcNRHV/wRghkU8f7muVbs3WV5IYbM3gtMY4f6fRJvyf3wmwCJbBtMAccOewbG7IKd6de+X4TITGRAys7VF4c0VeO6Kt3OsFAWgVsqWzI3UtvtbxgLjPv0zY73W8AfLJ7QCMwp8U3P0PpHKpmQy+Od3hJSQT2Qmkb6oKjcCS8uUHMqrGA0E13Y7QJgXj8B/HAJ86bbGVfQxMHwaxQgRALVURH/JPHwOIb3wtuO6P6wSDGbl+MxaTotcO6pZTtjkcMDtXhz0fJDvqrckJaj7lOVQphg8uszmsnRJbDTFLVnYfdhWtCv75ruc2ytftPWIH1FWC7QAy9E1n+FN1QF9xOzXn9wWKnh45Pt/NozFsPHZDXEUxfucFJ+m/Az2hDxuy18J0w2cwD/vg7c+lqoRBcMJwbOBFICRgAkgn/Nr65MwMMaIyX3xQxoJAsM3HCtxMfAN+Wl8cL02vMdjNBuC2zv0JkEz+GKDaY9OZ8+VGezEqZlFHwwrr1z+tlFPZ+2N3mbGCqxTK1mxw3JWeizHLBF4+kslf9lhkwhYLljVBUHoSSMZ8pMwOMHqMbNTExT8lnh7gcNTm2w87TF37hehZeycY7XW9G8zpOnkURerQ=
   distributions: sdist bdist_wheel
   skip_existing: true
-  on:
-    branch: develop
-  server: https://test.pypi.org/legacy/
 script:
 - echo "Done"
