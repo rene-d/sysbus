@@ -55,7 +55,7 @@ except ImportError as e:
 
 
 try:
-    from manuf import MacParser
+    from .manuf import MacParser
     mac_parser = MacParser()
 except ImportError:
     mac_parser = None
