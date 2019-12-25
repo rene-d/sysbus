@@ -1,5 +1,9 @@
 # sysbus.py
 
+[![Build Status](https://travis-ci.org/rene-d/sysbus.svg?branch=master)](https://travis-ci.org/rene-d/sysbus)
+[![pyi](https://img.shields.io/pypi/v/sysbus.svg)](https://pypi.python.org/pypi/sysbus)
+[![pyi](https://img.shields.io/pypi/pyversions/sysbus.svg)](https://pypi.python.org/pypi/sysbus)
+
 [🇬🇧 English version 🇺🇸](README.en.md) (thanks to [gitchomik](http://github.com/gitchomik/sysbus)).
 
 `sysbus.py` est un script écrit Python 3 qui permet de contrôler une Livebox par programme et d'en explorer les possibilités de contrôle et autres informations masquées. C'est un outil « expérimental ».
@@ -16,15 +20,15 @@ Il faudra également installer le moteur Graphviz. Sur macOS, on peut utiliser [
 
 Cela devrait fonctionner également avec Windows. Se référer aux sites des différents logiciels pour les procédures d'installation.
 
-[manuf.py](http://github.com/coolbho3k/manuf) permet d'afficher l'[OUI](https://fr.wikipedia.org/wiki/Organizationally_Unique_Identifier) à partir des adresses [MAC](https://fr.wikipedia.org/wiki/Adresse_MAC). La base de données `manuf` peut être mise à jour manuellement avec `./manuf.py -u`. 
+[manuf.py](http://github.com/coolbho3k/manuf) permet d'afficher l'[OUI](https://fr.wikipedia.org/wiki/Organizationally_Unique_Identifier) à partir des adresses [MAC](https://fr.wikipedia.org/wiki/Adresse_MAC). La base de données `manuf` peut être mise à jour manuellement avec `./manuf.py -u`.
 
 ## Configuration
 
 La plupart des requêtes requiert une authentification. C'est l'utilisateur `admin` et le mot de passe d'administration (par défaut les 8 premiers caractères de la clé Wi-Fi).
 
-Le script mémorise le mot de passe (ainsi que l'adresse de la Livebox et sa version si l'on n'utilise pas les valeurs par défaut) dans le fichier `~/.sysbusrc`.  
+Le script mémorise le mot de passe (ainsi que l'adresse de la Livebox et sa version si l'on n'utilise pas les valeurs par défaut) dans le fichier `~/.sysbusrc`.
 
-La version de la livebox vaut par défaut `lb4` (Livebox 4) mais peut être remplacée (`lb3` par exemple) après l'argument `-lversion`.  
+La version de la livebox vaut par défaut `lb4` (Livebox 4) mais peut être remplacée (`lb3` par exemple) après l'argument `-lversion`.
 
 Pour configurer, taper la commande suivante (en admettant que le mot de passe soit SECRET):
 
