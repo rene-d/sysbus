@@ -11,7 +11,7 @@ with open(path.join(here, "README.en.md"), encoding="utf-8") as f:
 
 setup(
     name="sysbus",
-    version="0.0.1",
+    version="0.0.2",
     description="Control by script your Livebox 2,3,4",
     long_description=long_description,
     long_description_content_type="text/markdown",
