@@ -1,5 +1,6 @@
 # sysbus.py 
-https://github.com/rene-d/sysbus/
+
+🇫🇷[Original French version](https://github.com/rene-d/sysbus/blob/master/README.md)🇫🇷
 
 `sysbus.py` is a Python 3 script that allows you to programmatically control a Livebox and explore control possibilities and other hidden information. It is an "experimental" tool. 
 
