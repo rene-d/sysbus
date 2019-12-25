@@ -4,7 +4,7 @@
 [![pyi](https://img.shields.io/pypi/v/sysbus.svg)](https://pypi.python.org/pypi/sysbus)
 [![pyi](https://img.shields.io/pypi/pyversions/sysbus.svg)](https://pypi.python.org/pypi/sysbus)
 
-[🇫🇷 Original french version 🇫🇷](README.md)
+[🇫🇷 Original version in French 🇫🇷](README.md)
 
 `sysbus.py` is a Python 3 script that allows you to programmatically control a Livebox and explore control possibilities and other hidden information. It is an "experimental" tool.
 
