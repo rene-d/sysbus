@@ -1,0 +1,17 @@
+language: python
+python:
+- 3.5
+install:
+- pip install -r requirements.txt
+- python setup.py install
+deploy:
+  provider: pypi
+  user: __token__
+  password:
+    secure: CDV53zeOpLsPKW00ih/zTlFfupYIZJExXEQTCM1pOSG5J5fHFmnvpY8FCKdmPCztuxpSxMBYB1nua2F2E25V8pptD27702asEySvctt/pN+bQqEUvyU5zSTmyIKs67un2dGVvgo0ypBX+XnUiObLCmez8RcUc2UlzLysG41Gta1Azems6gE1owEiYG2CSsHUrNir9n3oa5AmF+xmCq6fuwCfWFdNKlTlPD77RkTQwUyx7HMKuZGwzruxmKTX1YNkImKZOg6S4Xo6NzMbuE93ZQYhEAZvJK0UIZ1DZxvdsLRSgYb2RLrC/RQnwNWV61BHFC0EGOEgb1JW9T7WRiR5PvbRbTsSabT9lrvXglpG7m8bUC3AyLx9vf97NMfWsHw/YNMql3ZJUlQ3sjdXMp0YkKG4J8Jx0JZiXBJvyRByCD5N6FHT/yoCPOeNB1fkpw1sI1C2QFr/vDdT2nrKIaRPPg9r/j7lekFHD/mkxj4i8NZuubwKe+4Mt4RifuuJ2Kuciltp5RxSoju9Xu+PbUA69G0Ws66jTR64MGQ2olav5mlCPqX3OEJDXIIGwg3jzb3YeeT1XytRRXtLAnRgftYH6W0dYR9t/HoMLoxxqJsLYZmxvfE2vVCJEkJgZ08O55vnKeD5N/6cu8ZBs6pD7E9l3938AYhTgvWz2k0pJB+N4Gg=
+  distributions: sdist bdist_wheel
+  skip_existing: true
+  on:
+    branch: master
+script:
+- echo "Done"
