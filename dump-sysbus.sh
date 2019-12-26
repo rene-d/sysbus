@@ -1,6 +1,7 @@
-#! /bin/bash
+#!/usr/bin/env bash
 
-sysbus_cmd="$(cd $(dirname $0); pwd)/sysbus.py"
+# sysbus_cmd="$(cd $(dirname $0); pwd)/src/sysbus/sysbus.py"
+sysbus_cmd=sysbus
 
 sysbus()
 {
