@@ -149,7 +149,7 @@ Le datamodel reprend certains éléments de différents TR du Broadband Forum (c
 
 Par ailleurs, la présence d'un utilisateur 'cwmpd' (cf. l'objet UserManagement) au mot de passe inconnu tend à prouver que la Livebox communique en utilisant _CWMP_ (ou [TR-069](https://fr.wikipedia.org/wiki/TR-069)) avec sa gateway de management côté Orange.
 
-![diagramme de classe Hosts](docs/Hosts.png)
+![diagramme de classe Hosts](http://rene-d.github.io/sysbus/docs/Hosts.png)
 
 ### Nouveautés Livebox 4
 
@@ -168,7 +168,7 @@ L'option `-graph` de `sysbus.py` utilise Graphviz pour afficher le graphe entier
 
     $ ./sysbus.py -graph
 
-![graphe fonctionnel](docs/nemo_intf.png)
+![graphe fonctionnel](http://rene-d.github.io/sysbus/docs/nemo_intf.png)
 
 En grisé, les blocs qui sont inaccessibles (ils sont découverts uniquement grâce aux liaisons _upper_ et _lower_). Et en ellipse, les blocs désactivés.
 
@@ -201,7 +201,7 @@ La commande est également capable d'établir un tableau croisé entre MIBs et i
 
     $ ./sysbus.py -MIBs table [html]
 
-**Remarques :**
+### Remarques
 
 - Le graphe est peut-être incomplet puisqu'on ne connait les liaisons que des blocs accessibles : on ne peut pas connaître les liaisons entre deux blocs inaccessibles.
 - Par ailleurs, les deux blocs commençant par `data` et `lan` semblent séparés, tout deux étant au sommet de deux graphes distincts (au moins si le Wi-Fi partagé n'est pas activé). Pourtant le flux de données passe nécessairement d'un graphe à l'autre. `data` est relié à `eth1` qui la connexion extérieure, vers le boîtier fibre, `lan` est relié au Wi-Fi et à `eth0` qui représente le switch 4 ports du réseau local.
@@ -219,4 +219,4 @@ On y voit également les ports USB et l'UPnP.
 
     $ ./sysbus.py -topo simple
 
-![topologie réseau](docs/devices.png)
+![topologie réseau](http://rene-d.github.io/sysbus/docs/devices.png)

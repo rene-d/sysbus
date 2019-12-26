@@ -141,7 +141,7 @@ The datamodel includes some elements of different TR of the Broadband Forum (see
 
 In addition, the presence of a user 'cwmpd' (see the UserManagement object) with the unknown password tends to prove that the Livebox communicates using _CWMP_ (or [TR-069](https://en.wikipedia.org/wiki/TR-069)) with its management gateway on the Orange side.
 
-![Hosts class diagram](docs/Hosts.png)
+![Hosts class diagram](http://rene-d.github.io/sysbus/docs/Hosts.png)
 
 ### New Livebox 4
 
@@ -160,7 +160,7 @@ The `-graph` option in` sysbus.py` uses Graphviz to display the entire graph of 
 
     $ ./sysbus.py -graph
 
-![functional graph](docs/nemo_intf.png)
+![functional graph](http://rene-d.github.io/sysbus/docs/nemo_intf.png)
 
 In grayed out, the blocks that are inaccessible (they are discovered only thanks to the links _upper_ and _lower_). And in ellipse, blocks disabled.
 
@@ -193,7 +193,7 @@ The command is also able to establish a cross-tab between MIBs and interface to 
 
     $ ./sysbus.py -MIBs table [html]
 
-**Remarks:**
+### Remarks
 
 - The graph is perhaps incomplete since we only know the connections accessible blocks: we can not know the connections between two inaccessible blocks.
 - By the way, the two blocks starting with `data` and` lan` seem separate, both being at the top of two separate graphs (at least if shared Wi-Fi is not enabled). Yet the flow of data necessarily passes from one graph to another. `data` is connected to` eth1` which the external connection, to the fiber box, `lan` is connected to Wi-Fi and` eth0` which represents the switch 4 ports of the local network.
@@ -211,4 +211,4 @@ We also see USB ports and UPnP.
 
     $ ./sysbus.py -topo simple
 
-![network topology](docs/devices.png)
+![network topology](http://rene-d.github.io/sysbus/docs/devices.png)
