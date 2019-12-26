@@ -144,7 +144,7 @@ class MacParser(object):
             raise URLError("Failed downloading OUI database")
 
         # Parse the response
-        if response.code is 200:
+        if response.code == 200:
             with open(manuf_name, "wb") as write_file:
                 write_file.write(response.read())
             if refresh:
@@ -164,7 +164,7 @@ class MacParser(object):
             raise URLError("Failed downloading WFA database")
 
         # Parse the response
-        if response.code is 200:
+        if response.code == 200:
             with open(manuf_name, "ab") as write_file:
                 write_file.write(response.read())
             if refresh:

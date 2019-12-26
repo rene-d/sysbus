@@ -14,10 +14,32 @@ There is - unfortunately - no crunchy hidden information to discover, or so I ha
 
 The script is written in [Python 3](https://www.python.org/downloads/). It also requires [requests](http://docs.python-requests.org/) which greatly simplifies HTTP requests. It may use [Graphviz](http://www.graphviz.org) and one of its Python interface modules [graphviz](https://pypi.python.org/pypi/graphviz) to draw graphs.
 
-
 It will also install the Graphviz engine. On OSX we can use [brew](http://brew.sh). On Linux, `sudo apt-get install graphviz` or equivalent depending on the distribution.
 
 This should work also with Windows. Refer to the sites of the various software for installation procedures.
+
+### pip
+
+This installs the latest stable, released version.
+
+    $ pip3 install sysbus
+
+### Manually (from the sources)
+
+    $ pip3 install -r requirements.txt
+    $ pip3 install .
+
+### Without installation (run from the sources)
+
+    $ pip3 install requests
+    $ cd src/sysbus
+    $ ./sysbus.py -h
+
+_In this case, replace `sysbus` by `./sysbus.py` in the following commands._
+
+**Nota**
+
+The Python module [manuf.py](http://github.com/coolbho3k/manuf) displays the [OUI](https://fr.wikipedia.org/wiki/Organizationally_Unique_Identifier) from [MAC](https://fr.wikipedia.org/wiki/Adresse_MAC) addresses. The database `manuf` can be updated with `sysbus --update-oui`.
 
 ## Configuration
 
@@ -29,11 +51,11 @@ The version of the livebox defaults to `lb4` (Livebox 4) but can be replaced (` 
 
 To configure, type the following command (assuming that the password is SECRET):
 
-    $ ./sysbus.py -config -password SECRET [-url http://192.168.1.1/] [-lversion lb4]
+    $ sysbus -config -password SECRET [-url http://192.168.1.1/] [-lversion lb4]
 
 From now on, the script will use this login information each time. One can test by asking the time of the equipment:
 
-    $ ./sysbus.py
+    $ sysbus
     Livebox time: Sun, 14 Feb 2016 22:08:32 GMT + 0100
 
 ## Use
@@ -42,7 +64,7 @@ A certain number of requests are integrated in the script (like the request time
 
 The script is also able to send almost any request, provided that it is fully specified on the command line.
 
-    $ ./sysbus.py Time: getTime
+    $ sysbus Time: getTime
     Livebox time: Sun, 14 Feb 2016 22:13:30 GMT + 0100
 
 The `-h` or` --help` option displays all the possible syntax.
@@ -95,10 +117,10 @@ Note: This request does not require authentication, unlike the time request.
 ### Examples with the script
 
     # query similar to the curl example above
-    $ ./sysbus.py sysbus.NMC: getWANStatus
+    $ sysbus sysbus.NMC: getWANStatus
 
     # passing parameters
-    $ ./sysbus.py sysbus.NMC.Wifi: set Enable = True Status = True
+    $ sysbus sysbus.NMC.Wifi: set Enable = True Status = True
 
 ### Where to find the requests?
 
@@ -116,10 +138,10 @@ The sysbus interface has an interesting feature: that of being able to discover 
 
 For this, the HTTP request to make is a GET on the name of the object. The returned JSON describes the model.
 
-`sysbus.py` is able to make the return readable by detecting functions, parameters and object instances. Decoding, based solely on observation, may be incomplete.
+`sysbus` is able to make the return readable by detecting functions, parameters and object instances. Decoding, based solely on observation, may be incomplete.
 
     # queries the datamodel of the NMC.Wifi object
-    $ ./sysbus.py NMC.Wifi -model
+    $ sysbus NMC.Wifi -model
 
     ============================ =============== level 0
     OBJECT NAME: 'NMC.Wifi' (name: Wifi)
@@ -156,9 +178,9 @@ There is also a description of methods via Json queries:
 
 The interfaces and pseudo-interfaces are internally organized into graphs via _upper_ and _lower_ connections.
 
-The `-graph` option in` sysbus.py` uses Graphviz to display the entire graph of the interfaces.
+The `-graph` option in` sysbus` uses Graphviz to display the entire graph of the interfaces.
 
-    $ ./sysbus.py -graph
+    $ sysbus -graph
 
 ![functional graph](http://rene-d.github.io/sysbus/docs/nemo_intf.png)
 
@@ -168,11 +190,11 @@ The graph is displayed in SVG, which is used to zoom without loss. It can only b
 
 Each interface manages one or more MIBs. The list can be retrieved with the command:
 
-    $ ./sysbus.py -MIBs show
+    $ sysbus -MIBs show
 
 The MIBs (_Management Information Base_) are apparently close to SNMP MIBs, but they are not - or they are proprietary MIBs and can not be accessed in SNMP. This is the MIB named `base` which is exploited to build the graph.
 
-    $ ./sysbus.py NeMo.Intf.wl1: getMIBs mibs = base traverse = this
+    $ sysbus NeMo.Intf.wl1: getMIBs mibs = base traverse = this
     {'status': {'base': {'wl1': {'Enable': True,
                                  ' Flags': 'wlanvap penable netdev enabled '
                                           'wlanvap-bound wlansta netdev-bound'
@@ -191,7 +213,7 @@ The interpretation of the result of this query is:
 
 The command is also able to establish a cross-tab between MIBs and interface to find the use. See this [result] (docs / MIBs.md) where X = used, 0 = referenced but empty.
 
-    $ ./sysbus.py -MIBs table [html]
+    $ sysbus -MIBs table [html]
 
 ### Remarks
 
@@ -205,10 +227,10 @@ The Livebox is more or less able to display the [network topology](http://livebo
 
 In particular, peripherals connected in Wi-Fi 2.4GHz (interface wl0) and those connected in 5GHz (interface wl1).
 
-`sysbus.py` must be started with the` -topo` option to get this graph. Depending on the number of devices, the graph is very big. Adding `simple` the program only displays the device names.
+`sysbus` must be started with the` -topo` option to get this graph. Depending on the number of devices, the graph is very big. Adding `simple` the program only displays the device names.
 
 We also see USB ports and UPnP.
 
-    $ ./sysbus.py -topo simple
+    $ sysbus -topo simple
 
 ![network topology](http://rene-d.github.io/sysbus/docs/devices.png)

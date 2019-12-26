@@ -19,6 +19,7 @@ import configparser
 import datetime
 import html
 import subprocess
+import pkg_resources
 
 
 ##
@@ -54,11 +55,17 @@ except ImportError as e:
     sys.exit(2)
 
 
+# initialise la base de données OUI
+manuf_name = pkg_resources.resource_filename(__name__, "manuf")
 try:
     from .manuf import MacParser
-    mac_parser = MacParser()
+    mac_parser = MacParser(manuf_name)
 except ImportError:
-    mac_parser = None
+    try:
+        from manuf import MacParser
+        mac_parser = MacParser(manuf_name)
+    except ImportError:
+        mac_parser = None
 
 
 ##
@@ -1856,6 +1863,7 @@ def main():
     parser = argparse.ArgumentParser(description='requêtes sysbus pour Livebox')
 
     parser.add_argument("-v", "--verbose", action="count", default=verbosity)
+    parser.add_argument("--update-oui", action="store_true", help="met à jour la base de données manuf")
 
     # options "commandes"
     parser.add_argument('-scan', help="analyse les requêtes sysbus dans scripts.js",
@@ -1897,6 +1905,15 @@ def main():
     args = parser.parse_args()
 
     verbosity = args.verbose
+
+    if args.update_oui:
+        if mac_parser is None:
+            error("module anuf non trouvé")
+            exit(2)
+        MacParser(manuf_name=manuf_name, update=True)
+        debug(1, "mise à jour:", manuf_name)
+        exit(0)
+
     load_conf()
 
     new_session = False

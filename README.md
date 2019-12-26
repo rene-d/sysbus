@@ -6,7 +6,7 @@
 
 [🇬🇧 English version 🇺🇸](README.en.md) (thanks to [gitchomik](http://github.com/gitchomik/sysbus)).
 
-`sysbus.py` est un script écrit Python 3 qui permet de contrôler une Livebox par programme et d'en explorer les possibilités de contrôle et autres informations masquées. C'est un outil « expérimental ».
+`sysbus.py` est un script Python 3 qui permet de contrôler une Livebox par programme et d'en explorer les possibilités de contrôle et autres informations masquées. C'est un outil « expérimental ».
 
 Il n'y a - malheureusement - aucune information cachée croustillante à découvrir, ou alors je n'ai rien trouvé. La Livebox est suffisamment bien fermée.
 
@@ -14,13 +14,32 @@ Il n'y a - malheureusement - aucune information cachée croustillante à découv
 
 Le script est écrit en [Python 3](https://www.python.org/downloads/). Il requiert également [requests](http://docs.python-requests.org/) qui simplifie grandement les requêtes HTTP. Il utilise éventuellement [Graphviz](http://www.graphviz.org) et un de ses modules d'interface Python [graphviz](https://pypi.python.org/pypi/graphviz) pour dessiner des graphes.
 
-    $  pip3 install requests graphviz
-
 Il faudra également installer le moteur Graphviz. Sur macOS, on peut utiliser [brew](http://brew.sh). Sur Linux, `sudo apt-get install graphviz` ou équivalent selon la distribution.
 
 Cela devrait fonctionner également avec Windows. Se référer aux sites des différents logiciels pour les procédures d'installation.
 
-[manuf.py](http://github.com/coolbho3k/manuf) permet d'afficher l'[OUI](https://fr.wikipedia.org/wiki/Organizationally_Unique_Identifier) à partir des adresses [MAC](https://fr.wikipedia.org/wiki/Adresse_MAC). La base de données `manuf` peut être mise à jour manuellement avec `./manuf.py -u`.
+### pip
+
+Installation de la dernière version stable depuis [PyPI](https://pypi.org).
+
+    $ pip3 install sysbus
+
+### Manuellement (depuis les sources)
+
+    $ pip3 install -r requirements.txt
+    $ pip3 install .
+
+### Sans installation (exécution depuis les sources)
+
+    $ pip3 install requests
+    $ cd src/sysbus
+    $ ./sysbus.py -h
+
+_Remplacer dans ce cas `sysbus` par `./sysbus.py` dans les commandes qui suivent._
+
+**Nota**
+
+Le module Python [manuf.py](http://github.com/coolbho3k/manuf) permet d'afficher l'[OUI](https://fr.wikipedia.org/wiki/Organizationally_Unique_Identifier) à partir des adresses [MAC](https://fr.wikipedia.org/wiki/Adresse_MAC). La base de données `manuf` peut être mise à jour manuellement avec `sysbus --update-oui`.
 
 ## Configuration
 
@@ -32,11 +51,11 @@ La version de la livebox vaut par défaut `lb4` (Livebox 4) mais peut être remp
 
 Pour configurer, taper la commande suivante (en admettant que le mot de passe soit SECRET):
 
-    $ ./sysbus.py -config -password SECRET [ -url http://192.168.1.1/ ] [ -lversion lb4 ]
+    $ sysbus -config -password SECRET [ -url http://192.168.1.1/ ] [ -lversion lb4 ]
 
 Dorénavant, le script utilisera ces informations de connexion à chaque fois. On peut tester en demandant l'heure de l'équipement:
 
-    $ ./sysbus.py
+    $ sysbus
     Livebox time:  Sun, 14 Feb 2016 22:08:32 GMT+0100
 
 ## Utilisation
@@ -45,7 +64,7 @@ Un certain nombre de requêtes sont intégrées au script (comme la demande de l
 
 Le script est aussi capable d'envoyer presque n'importe quelle requête, pourvu qu'on la spécifie entièrement sur la ligne de commande.
 
-    $ ./sysbus.py Time:getTime
+    $ sysbus Time:getTime
     Livebox time:  Sun, 14 Feb 2016 22:13:30 GMT+0100
 
 L'option `-h` ou `--help` affiche l'ensemble de la syntaxe possible.
@@ -103,10 +122,10 @@ Nota: cette requête ne requiert pas d'authentification, contrairement à la dem
 ### Exemples avec le script
 
     # requête similaire à l'exemple curl ci-dessus
-    $ ./sysbus.py sysbus.NMC:getWANStatus
+    $ sysbus sysbus.NMC:getWANStatus
 
     # en passant des paramètres
-    $ ./sysbus.py sysbus.NMC.Wifi:set Enable=True Status=True
+    $ sysbus sysbus.NMC.Wifi:set Enable=True Status=True
 
 ### Où trouver les requêtes ?
 
@@ -124,10 +143,10 @@ L'interface sysbus a une fonctionnalité intéressante : celle de pouvoir décou
 
 Pour cela, la requête HTTP à faire est un GET sur le nom de l'objet. Le JSON retourné décrit le modèle.
 
-`sysbus.py` est capable de rendre plus lisible le retour en détectant les fonctions, les paramètres et les instances d'objet. Le décodage, basé uniquement sur l'observation, est peut-être incomplet.
+`sysbus` est capable de rendre plus lisible le retour en détectant les fonctions, les paramètres et les instances d'objet. Le décodage, basé uniquement sur l'observation, est peut-être incomplet.
 
     # interroge le datamodel de l'objet NMC.Wifi
-    $ ./sysbus.py NMC.Wifi -model
+    $ sysbus NMC.Wifi -model
 
     =========================================== level 0
     OBJECT NAME: 'NMC.Wifi'  (name: Wifi)
@@ -164,9 +183,9 @@ On y trouve aussi une description des méthodes via des requêtes Json :
 
 Les interfaces et pseudo-interfaces sont organisées en interne en graphe via des connexions _upper_ et _lower_.
 
-L'option `-graph` de `sysbus.py` utilise Graphviz pour afficher le graphe entier des interfaces.
+L'option `-graph` de `sysbus` utilise Graphviz pour afficher le graphe entier des interfaces.
 
-    $ ./sysbus.py -graph
+    $ sysbus -graph
 
 ![graphe fonctionnel](http://rene-d.github.io/sysbus/docs/nemo_intf.png)
 
@@ -176,11 +195,11 @@ Le graphe s'affiche en SVG, ce qui est permet de zoomer sans perte. C'est modifi
 
 Chaque interface gère une ou plusieurs MIBs. La liste peut être extraite avec la commande :
 
-    $ ./sysbus.py -MIBs show
+    $ sysbus -MIBs show
 
 Les MIB (_Management Information Base_) sont apparemment proches des MIB SNMP, sans toutefois en être - ou alors ce sont des MIB propriétaires et inaccessibles en SNMP. C'est la MIB nommée `base` qui est exploitée pour construire le graphe.
 
-    $ ./sysbus.py NeMo.Intf.wl1:getMIBs mibs=base traverse=this
+    $ sysbus NeMo.Intf.wl1:getMIBs mibs=base traverse=this
     {'status': {'base': {'wl1': {'Enable': True,
                                  'Flags': 'wlanvap penable netdev enabled '
                                           'wlanvap-bound wlansta netdev-bound '
@@ -199,7 +218,7 @@ L'interprétation du résultat de cette requête est :
 
 La commande est également capable d'établir un tableau croisé entre MIBs et interface pour en trouver l'usage. Cf. ce [résultat](docs/MIBs.md) où X=utilisée, 0=référencée mais vide.
 
-    $ ./sysbus.py -MIBs table [html]
+    $ sysbus -MIBs table [html]
 
 ### Remarques
 
@@ -213,10 +232,10 @@ La Livebox est plus ou moins capable d'afficher la [topologie du réseau](http:/
 
 Notamment, les périphériques connectés en Wi-Fi 2.4GHz (interface wl0) et ceux connectés en 5GHz (interface wl1).
 
-`sysbus.py` doit être lancé avec l'option `-topo` pour obtenir ce graphe. En fonction du nombre de périphériques, le graphe est très gros. En rajoutant `simple` le programme n'affiche que le nom des périphériques.
+`sysbus` doit être lancé avec l'option `-topo` pour obtenir ce graphe. En fonction du nombre de périphériques, le graphe est très gros. En rajoutant `simple` le programme n'affiche que le nom des périphériques.
 
 On y voit également les ports USB et l'UPnP.
 
-    $ ./sysbus.py -topo simple
+    $ sysbus -topo simple
 
 ![topologie réseau](http://rene-d.github.io/sysbus/docs/devices.png)
