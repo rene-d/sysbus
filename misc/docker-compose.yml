@@ -1,0 +1,8 @@
+version: "3"
+services:
+  livebox:
+    build: .
+    volumes:
+      - .:/out
+    ports:
+      - 8000:8000
