@@ -37,7 +37,7 @@ setup(
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     python_requires=">=3.5",
-    install_requires=["requests", "graphviz", "qrcode", "python-dateutil],
+    install_requires=["requests", "graphviz", "qrcode", "python-dateutil"],
     package_data={"sysbus": ["manuf"]},
     entry_points={"console_scripts": ["sysbus=sysbus.sysbus:main"]},
     project_urls={
