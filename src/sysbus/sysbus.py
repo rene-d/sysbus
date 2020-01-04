@@ -20,6 +20,8 @@ import datetime
 import html
 import subprocess
 import pkg_resources
+from dateutil.tz import tz
+from dateutil import parser as parsedate
 
 
 ##
@@ -1774,8 +1776,6 @@ def add_commands(parser):
             if len(args) > 0:
                 print(i[args[0]])
             else:
-                d = datetime.datetime.strptime(i['startTime'], "%Y-%m-%dT%H:%M:%SZ")
-
                 if i['callOrigin'] == 'local':
                     arrow = '<=='
                 else:
@@ -1784,7 +1784,7 @@ def add_commands(parser):
                     i['callId'],
                     arrow,
                     i['remoteNumber'] if i['remoteNumber'] != '' else '**********',
-                    d,
+                    parsedate.isoparse(i['startTime']).astimezone(tz.tzlocal()),
                     str(datetime.timedelta(seconds=int(i['duration']))),
                     i['callType']
                     ))
