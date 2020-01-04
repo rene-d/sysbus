@@ -444,7 +444,8 @@ def requete_print(chemin, args=None, get=False):
     #return
     result = requete(chemin, args, get)
     if result:
-        pprint.pprint(result)
+        # pprint.pprint(result)
+        json.dump(result, sys.stdout, indent=4)
     return result
 
 
@@ -480,7 +481,8 @@ def model(node, level=0, file=None):
 
     # si ce n'est pas un datamodel, on sort
     if not 'objectInfo' in node:
-        pprint.pprint(node)
+        # pprint.pprint(node)
+        json.dump(node, sys.stdout, indent=4)
         return
 
     o = node['objectInfo']
@@ -505,7 +507,8 @@ def model(node, level=0, file=None):
 
         elif i == "--templateInfo":
             print("templateInfo:")
-            pprint.pprint(node[i])
+            # pprint.pprint(node[i])
+            json.dump(node[i], sys.stdout, indent=4)
             sys.exit()
 
         elif i == "errors":
@@ -1090,8 +1093,8 @@ def MIBs_save_cmd():
 
         # le modèle en json
         with open("mibs/" + i + ".dict", "w") as f:
-            pprint.pprint(r, stream=f)
-            #json.dump(r, f, indent=4, separators=(',', ': '))
+            # pprint.pprint(r, stream=f)
+            json.dump(r, f, indent=4)
             f.close()
 
         # le modèle décodé
@@ -1106,7 +1109,8 @@ def MIBs_save_cmd():
         r = requete('NeMo.Intf.' + i + ':getMIBs', { "traverse": "this" })
         if r is None: continue
         with open("mibs/" + i + ".mib", "w") as f:
-            pprint.pprint(r, stream=f)
+            # pprint.pprint(r, stream=f)
+            json.dump(r, f, indent=4)
             f.close()
 
 
@@ -1386,12 +1390,11 @@ def add_commands(parser):
         if len(args) > 0:
             for i in range(0, len(args)):
                 for _, host in r['status'].items():
-                    if host['MACAddress'].lower() == args[i].lower():
-                        pprint.pprint(host)
-                    elif host['HostName'].lower() == args[i].lower():
-                        pprint.pprint(host)
-                    elif host['IPAddress'] == args[i]:
-                        pprint.pprint(host)
+                    if (host['MACAddress'].lower() == args[i].lower()
+                        or host['HostName'].lower() == args[i].lower()
+                        or host['IPAddress'] == args[i]):
+                        # pprint.pprint(host)
+                        json.dump(host, sys.stdout, indent=4)
         else:
             #pprint.pprint(r['status'])
             for _, host in r['status'].items():
@@ -1533,7 +1536,8 @@ def add_commands(parser):
                 else:
                     r = requete('NeMo.Intf.' + args[0] + ':getMIBs', { "traverse": "this" })
                 if r is None: return
-                pprint.pprint(r)
+                # pprint.pprint(r)
+                json.dump(r, sys.stdout, indent=4)
 
 
     # ajout la règle pour vpn sur le NAS, l'interface web de la Livebox empêche d'en mettre sur le port 1701
