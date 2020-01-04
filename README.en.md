@@ -128,7 +128,7 @@ The script has a `-scan` option that more or less lists the method calls that ar
 
 Modern browser debuggers are also able to view sent queries and their results.
 
-Another way is to use [wireshark] (https://www.wireshark.org) or [tcpflow] (https://github.com/simsong/tcpflow) and perform the actions that you wish to script, either via web interface, either via the mobile app if you know how to capture the Wi-Fi smartphone or tablet.
+Another way is to use [wireshark](https://www.wireshark.org) or [tcpflow](https://github.com/simsong/tcpflow) and perform the actions that you wish to script, either via web interface, either via the mobile app if you know how to capture the Wi-Fi smartphone or tablet.
 
 Finally, the last source of information is the datamodel.
 
@@ -211,7 +211,7 @@ The interpretation of the result of this query is:
 - this MIB describes the graph,`wl1` being connected by a _upper_ link to the` bridge` interface and a _lower_ link to `wifi1_ath`
 - the interface is activated (`Status`)
 
-The command is also able to establish a cross-tab between MIBs and interface to find the use. See this [result] (docs / MIBs.md) where X = used, 0 = referenced but empty.
+The command is also able to establish a cross-tab between MIBs and interface to find the use. See this [result](docs/MIBs.md) where X = used, 0 = referenced but empty.
 
     $ sysbus -MIBs table [html]
 
