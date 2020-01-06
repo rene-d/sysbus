@@ -1,8 +1,10 @@
 # sysbus.py
 
 [![Build Status](https://travis-ci.org/rene-d/sysbus.svg?branch=master)](https://travis-ci.org/rene-d/sysbus)
-[![pyi](https://img.shields.io/pypi/v/sysbus.svg)](https://pypi.python.org/pypi/sysbus)
-[![pyi](https://img.shields.io/pypi/pyversions/sysbus.svg)](https://pypi.python.org/pypi/sysbus)
+[![pypi](https://img.shields.io/pypi/v/sysbus.svg)](https://pypi.python.org/pypi/sysbus)
+[![pypi](https://img.shields.io/pypi/pyversions/sysbus.svg)](https://pypi.python.org/pypi/sysbus)
+[![MIT License](https://img.shields.io/github/license/rene-d/sysbus.svg?logoColor=silver&logo=open-source-initiative&label=&color=blue)](https://github.com/rene-d/sysbus/blob/master/LICENSE)
+
 
 [🇬🇧 English version 🇺🇸](README.en.md) (thanks to [gitchomik](http://github.com/gitchomik/sysbus)).
 

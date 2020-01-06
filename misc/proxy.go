@@ -14,7 +14,7 @@ import (
 )
 
 // liveboxURL is the address of the livebox
-var liveboxURL = "http://livebox.home"
+var originURL = "http://livebox.home"
 
 // proxyAddress is where the reverse proxy listens to
 var proxyAddress = ":8000"
@@ -25,9 +25,9 @@ var logfile *os.File
 var logLines map[string]bool
 
 // serveReverseProxy runs the reverse proxy for a given url
-func serveReverseProxy(target string, res http.ResponseWriter, req *http.Request) {
+func serveReverseProxy(res http.ResponseWriter, req *http.Request) {
 	// parse the url
-	url, _ := url.Parse(target)
+	url, _ := url.Parse(originURL)
 
 	// create the reverse proxy
 	proxy := httputil.NewSingleHostReverseProxy(url)
@@ -110,7 +110,7 @@ func handleRequestAndRedirect(res http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	serveReverseProxy(liveboxURL, res, req)
+	serveReverseProxy(res, req)
 }
 
 func main() {
@@ -127,10 +127,10 @@ func main() {
 		panic(err)
 	}
 
-	log.Println("reverse proxy for", liveboxURL)
+	log.Println("reverse proxy for", originURL)
 	log.Println("listening on", proxyAddress)
 	log.Println("logging into", logfileName)
-	log.Println("open http://localhost" + proxyAddress + "/")
+	log.Println("open http://localhost" + proxyAddress + "/ in a web browser")
 
 	http.HandleFunc("/", handleRequestAndRedirect)
 	err = http.ListenAndServe(proxyAddress, nil)
