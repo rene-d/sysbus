@@ -2,6 +2,7 @@
 # rejoue les requêtes sysbus de livebox.log
 
 password=$1
+livebox_url=${2:-http://livebox.home}
 
 mkdir -p ws
 
@@ -23,7 +24,7 @@ do
            -H 'Accept: text/javascript' \
            -H 'X-Context: '"$contextID"'' \
            -H 'X-Prototype-Version: 1.7' \
-           -d "$col3" http://livebox.home/ws | jq . > $out
+           -d "$col3" ${livebox_url}/ws | jq . > $out
 
     else
         service=$(echo "$col3" | jq -rc '"\(.service):\(.method)"')
