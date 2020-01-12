@@ -24,23 +24,6 @@ var logfile *os.File
 
 var logLines map[string]bool
 
-// serveReverseProxy runs the reverse proxy for a given url
-func serveReverseProxy(res http.ResponseWriter, req *http.Request) {
-	// parse the url
-	url, _ := url.Parse(originURL)
-
-	// create the reverse proxy
-	proxy := httputil.NewSingleHostReverseProxy(url)
-
-	// Update the headers to allow for SSL redirection
-	req.URL.Host = url.Host
-	req.URL.Scheme = url.Scheme
-	req.Header.Set("X-Forwarded-Host", req.Header.Get("Host"))
-	req.Host = url.Host
-
-	// Note that ServeHttp is non blocking and uses a go routine under the hood
-	proxy.ServeHTTP(res, req)
-}
 
 // drainBody reads all of b to memory and then returns two equivalent
 // ReadClosers yielding the same bytes.
@@ -63,7 +46,7 @@ func drainBody(b io.ReadCloser) (r1, r2 io.ReadCloser, err error) {
 }
 
 // getBody returns the body as a string
-func getBody(req *http.Request) string {
+func getBodyRequest(req *http.Request) string {
 	var err error
 	save := req.Body
 
@@ -93,20 +76,82 @@ func getBody(req *http.Request) string {
 	return string(b.Bytes())
 }
 
-func handleRequestAndRedirect(res http.ResponseWriter, req *http.Request) {
+// getBody returns the body as a string
+func getBodyResponse(req *http.Response) string {
+	var err error
+	save := req.Body
 
-	s := fmt.Sprintln(req.Method, req.RequestURI, getBody(req))
-
-	if logfile != nil {
-		fmt.Fprint(logfile, s)
+	save, req.Body, err = drainBody(req.Body)
+	if err != nil {
+		return ""
 	}
 
-	if strings.Contains(s, "\"events\":") == false {
-		// do not print events
-		_, seen := logLines[s]
-		if seen == false {
+	var b bytes.Buffer
+
+	chunked := len(req.TransferEncoding) > 0 && req.TransferEncoding[0] == "chunked"
+
+	if req.Body != nil {
+		var dest io.Writer = &b
+		if chunked {
+			dest = httputil.NewChunkedWriter(dest)
+		}
+		_, err = io.Copy(dest, req.Body)
+		if chunked {
+			dest.(io.Closer).Close()
+			io.WriteString(&b, "\r\n")
+		}
+	}
+
+	req.Body = save
+
+	return string(b.Bytes())
+}
+
+// serveReverseProxy runs the reverse proxy for a given url
+func serveReverseProxy(res http.ResponseWriter, req *http.Request) {
+	// parse the url
+	url, _ := url.Parse(originURL)
+
+	// create the reverse proxy
+	proxy := httputil.NewSingleHostReverseProxy(url)
+
+	// Update the headers to allow for SSL redirection
+	req.URL.Host = url.Host
+	req.URL.Scheme = url.Scheme
+	req.Header.Set("X-Forwarded-Host", req.Header.Get("Host"))
+	req.Host = url.Host
+
+    proxy.ModifyResponse = func(r *http.Response) error {
+		if req.Method == "GET" {
+			s := fmt.Sprintln(req.Method, req.RequestURI, r.StatusCode)
+			if logfile != nil {
+				fmt.Fprint(logfile, s)
+			}
+			_, seen := logLines[s]
+			if seen == false {
+				log.Print(s)
+				logLines[s] = true
+			}
+		}
+        return nil
+    }
+
+	// Note that ServeHttp is non blocking and uses a go routine under the hood
+	proxy.ServeHTTP(res, req)
+}
+
+func handleRequestAndRedirect(res http.ResponseWriter, req *http.Request) {
+
+	if req.Method == "POST" {
+		s := fmt.Sprintln(req.Method, req.RequestURI, getBodyRequest(req))
+
+		if logfile != nil {
+			fmt.Fprint(logfile, s)
+		}
+
+		if strings.Contains(s, "\"events\":") == false {
+			// do not print events
 			log.Print(s)
-			logLines[s] = true
 		}
 	}
 
