@@ -6,9 +6,9 @@
 
 [🇫🇷 Original version in French 🇫🇷](README.md)
 
-**WARNING**: I am not the author of this translation. It may contain errorss or typos (especially with spaces...).
+**WARNING**: I am not the author of this translation. It may contain errors or typos (especially with spaces...).
 
-**WARNING**: Some information may be out of date and irrelevant, Livebox software has been updated.
+**WARNING**: Some information may be out of date and irrelevant since Livebox software has been updated by Orange.
 
 `sysbus.py` is a Python 3 script that allows you to programmatically control a Livebox and explore control possibilities and other hidden information. It is an "experimental" tool.
 
