@@ -6,6 +6,10 @@
 
 [🇫🇷 Original version in French 🇫🇷](README.md)
 
+**WARNING**: I am not the author of this translation. It may contain errorss or typos (especially with spaces...).
+
+**WARNING**: Some information may be out of date and irrelevant, Livebox software has been updated.
+
 `sysbus.py` is a Python 3 script that allows you to programmatically control a Livebox and explore control possibilities and other hidden information. It is an "experimental" tool.
 
 There is - unfortunately - no crunchy hidden information to discover, or so I have not found anything. The Livebox is closed well enough.
@@ -64,7 +68,7 @@ A certain number of requests are integrated in the script (like the request time
 
 The script is also able to send almost any request, provided that it is fully specified on the command line.
 
-    $ sysbus Time: getTime
+    $ sysbus Time:getTime
     Livebox time: Sun, 14 Feb 2016 22:13:30 GMT + 0100
 
 The `-h` or` --help` option displays all the possible syntax.
@@ -83,31 +87,42 @@ The principle is to send POST requests with a list of parameters in a JSON objec
 
 It is reasonable to think that this is also the way that Orange administers Liveboxes (activation of shared Wi-Fi, updates) and perhaps network and / or hardware diagnostics.
 
-### Example with
+### Example with curl
 
-PLC curl used by Livebox 4 (firmware SG40_sip-en-2.14.8.1_7.21.3.1), which works with Livebox 3 (with firmware SG30_sip-en-5.17.3.1 at least):
+API used by Livebox 4 (firmware SG40_sip-en-2.14.8.1_7.21.3.1), which works with Livebox 3 (with firmware SG30_sip-en-5.17.3.1 at least):
 
-    $ curl -s -X POST -H "Content-Type: application / x-sah-ws-1-call + json" -d '{"service": "NMC", "method": "getWANStatus", "parameters" : {}} 'http: //192.168.1.
+```bash
+curl -s -X POST -H "Content-Type: application/x-sah-ws-1-call+json" -d '{"service":"NMC","method":"getWANStatus","parameters":{}}' http://192.168.1.1/ws
+```
 
+API used on old Livebox and the mobile apps:
 
-    $ curl -s -X POST -H "Content-Type: application / json" -d '{"parameters": {}}' http://192.168.1.1/sysbus/NMC:getWANStatus | jq.
+```bash
+curl -s -X POST -H "Content-Type: application/json" -d '{"parameters":{}}' http://192.168.1.1/sysbus/NMC:getWANStatus | jq .
+```
 
 Result:
 
-    {
-      "result": {
+```json
+{
+    "result": {
         "status": true,
         "data": {
-          "LinkType": "ethernet",
-          "LinkState": "up",
-          "MACAddress": "3C: 81: D8: xx: yy: zz ",
-          " Protocol ":" dhcp ",
-          " ConnectionState ":" Bound ",
-          " LastConnectionError ":" None ",
-          " IPAddress ":" aa.bb.cc.dd ",
-          " RemoteGateway ":"
-      }
+            "LinkType": "ethernet",
+            "LinkState": "up",
+            "MACAddress": "3C:81:D8:xx:yy:zz",
+            "Protocol": "dhcp",
+            "ConnectionState": "Bound",
+            "LastConnectionError": "None",
+            "IPAddress": "aa.bb.cc.dd",
+            "RemoteGateway": "aa.bb.cc.dd",
+            "DNSServers": "80.10.246.136,81.253.149.6",
+            "IPv6Address": "2a01:cb00:xyzt:abcd:1:2:3:4",
+            "IPv6DelegatedPrefix": "2a01:cb00:xyzt:abcd::/56"
+        }
     }
+}
+```
 
 [jq](https://stedolan.github.io/jq/) is a tool that allows, among other things, to
 reformat the JSON.
@@ -117,10 +132,10 @@ Note: This request does not require authentication, unlike the time request.
 ### Examples with the script
 
     # query similar to the curl example above
-    $ sysbus sysbus.NMC: getWANStatus
+    $ sysbus sysbus.NMC:getWANStatus
 
     # passing parameters
-    $ sysbus sysbus.NMC.Wifi: set Enable = True Status = True
+    $ sysbus sysbus.NMC.Wifi:set Enable = True Status = True
 
 ### Where to find the requests?
 
@@ -143,17 +158,17 @@ For this, the HTTP request to make is a GET on the name of the object. The retur
     # queries the datamodel of the NMC.Wifi object
     $ sysbus NMC.Wifi -model
 
-    ============================ =============== level 0
-    OBJECT NAME: 'NMC.Wifi' (name: Wifi)
+    =========================================== level 0
+    OBJECT NAME: 'NMC.Wifi'  (name: Wifi)
     function: startPairing (opt clientPIN)
     function: stopPairing ()
     function: startAutoChannelSelection ()
     function: getStats (out RxBytes, out TxBytes)
     function: get ()
     function: set (opt parameters)
-    parameter: Enable: bool = 'True'
-    parameter: Status: bool = 'True'
-    parameter: ConfigurationMode: bool = 'True'
+    parameter:  Enable               : bool       = 'True'
+    parameter:  Status               : bool       = 'True'
+    parameter:  ConfigurationMode    : bool       = 'True'
 
 Launched without an object name, the program displays the datamodel, with access restrictions. However, sub-objects can be accessible, such as NeMo.Intf.data, while neither NeMo nor NeMo.Intf are accessible. There are also the objects NeMo.MIB. * Name * (NeMo.MIB.alias for example), but forbidden access.
 
@@ -171,7 +186,7 @@ The LB4's web interface is much more advanced. The datamodel is essentially the 
 
 There is also a description of methods via Json queries:
 
-    curl -s http: //livebox.home/sdkut/apis/pcb/Time/getTime.json | jq.
+    curl -s http://livebox.home/sdkut/apis/pcb/Time/getTime.json | jq .
 
 
 ## The NeMo.Intf graph
@@ -194,14 +209,14 @@ Each interface manages one or more MIBs. The list can be retrieved with the comm
 
 The MIBs (_Management Information Base_) are apparently close to SNMP MIBs, but they are not - or they are proprietary MIBs and can not be accessed in SNMP. This is the MIB named `base` which is exploited to build the graph.
 
-    $ sysbus NeMo.Intf.wl1: getMIBs mibs = base traverse = this
+    $ sysbus NeMo.Intf.wl1:getMIBs mibs=base traverse=this
     {'status': {'base': {'wl1': {'Enable': True,
-                                 ' Flags': 'wlanvap penable netdev enabled '
-                                          'wlanvap-bound wlansta netdev-bound'
-                                          'inbridge netdev-up' ',
-                                 ' LLIntf ': {' wifi1_ath ': {' Name ':' wifi1_ath '}},
-                                 ' Name ':' wl1 ',
-                                 ' Status': True ,
+                                 'Flags': 'wlanvap penable netdev enabled '
+                                          'wlanvap-bound wlansta netdev-bound '
+                                          'inbridge netdev-up up',
+                                 'LLIntf': {'wifi1_ath': {'Name': 'wifi1_ath'}},
+                                 'Name': 'wl1',
+                                 'Status': True,
                                  'ULIntf': {'bridge': {'Name': 'bridge'}}}}}}
 
 The interpretation of the result of this query is:

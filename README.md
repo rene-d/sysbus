@@ -8,6 +8,8 @@
 
 [🇬🇧 English version 🇺🇸](README.en.md) (thanks to [gitchomik](http://github.com/gitchomik/sysbus)).
 
+**AVERTISSEMENT**: Certaines informations peuvent être périmées ou hors sujet, le logiciel de la Livebox continuant d'être mis à jour par Orange.
+
 `sysbus.py` est un script Python 3 qui permet de contrôler une Livebox par programme et d'en explorer les possibilités de contrôle et autres informations masquées. C'est un outil « expérimental ».
 
 Il n'y a - malheureusement - aucune information cachée croustillante à découvrir, ou alors je n'ai rien trouvé. La Livebox est suffisamment bien fermée.
@@ -89,32 +91,38 @@ Il est raisonnable de penser que c'est également par cette voie qu'Orange admin
 
 API utilisée par les Livebox 4 (firmware SG40_sip-fr-2.14.8.1_7.21.3.1), qui fonctionne avec les Livebox 3 (avec le firmware SG30_sip-fr-5.17.3.1 au moins):
 
-    $ curl -s -X POST -H "Content-Type: application/x-sah-ws-1-call+json" -d '{"service":"NMC","method":"getWANStatus","parameters":{}}' http://192.168.1.1/ws
+```bash
+curl -s -X POST -H "Content-Type: application/x-sah-ws-1-call+json" -d '{"service":"NMC","method":"getWANStatus","parameters":{}}' http://192.168.1.1/ws
+```
 
 API utilisée par les précédents Livebox ainsi que les applications mobiles:
 
-    $ curl -s -X POST -H "Content-Type: application/json" -d '{"parameters":{}}' http://192.168.1.1/sysbus/NMC:getWANStatus | jq .
+```bash
+curl -s -X POST -H "Content-Type: application/json" -d '{"parameters":{}}' http://192.168.1.1/sysbus/NMC:getWANStatus | jq .
+```
 
 Résultat :
 
-    {
-      "result": {
+```json
+{
+    "result": {
         "status": true,
         "data": {
-          "LinkType": "ethernet",
-          "LinkState": "up",
-          "MACAddress": "3C:81:D8:xx:yy:zz",
-          "Protocol": "dhcp",
-          "ConnectionState": "Bound",
-          "LastConnectionError": "None",
-          "IPAddress": "aa.bb.cc.dd",
-          "RemoteGateway": "aa.bb.cc.dd",
-          "DNSServers": "80.10.246.136,81.253.149.6",
-          "IPv6Address": "2a01:cb00:xyzt:abcd:1:2:3:4",
-          "IPv6DelegatedPrefix": "2a01:cb00:xyzt:abcd::/56"
+            "LinkType": "ethernet",
+            "LinkState": "up",
+            "MACAddress": "3C:81:D8:xx:yy:zz",
+            "Protocol": "dhcp",
+            "ConnectionState": "Bound",
+            "LastConnectionError": "None",
+            "IPAddress": "aa.bb.cc.dd",
+            "RemoteGateway": "aa.bb.cc.dd",
+            "DNSServers": "80.10.246.136,81.253.149.6",
+            "IPv6Address": "2a01:cb00:xyzt:abcd:1:2:3:4",
+            "IPv6DelegatedPrefix": "2a01:cb00:xyzt:abcd::/56"
         }
-      }
     }
+}
+```
 
 [jq](https://stedolan.github.io/jq/) est un outil qui permet entre autres de
 reformater le JSON.
