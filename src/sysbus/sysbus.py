@@ -837,7 +837,7 @@ def model_uml_cmd(chemin, prof=None, out=None):
     if model['objectInfo']['keyPath'] == "" and model['objectInfo']['key'] == "":
 
         if not os.path.isdir("models"):
-            debug(2, "créatoin répertoire: " % "models")
+            debug(2, "création répertoire: %s" % "models")
             os.makedirs("models")
 
         # on crée des diagrammes par top-level objects, sinon c'est trop gros
