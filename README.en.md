@@ -135,7 +135,7 @@ Note: This request does not require authentication, unlike the time request.
     $ sysbus sysbus.NMC:getWANStatus
 
     # passing parameters
-    $ sysbus sysbus.NMC.Wifi:set Enable = True Status = True
+    $ sysbus sysbus.NMC.Wifi:set Enable=True Status=True
 
 ### Where to find the requests?
 
