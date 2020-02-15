@@ -174,6 +174,7 @@ def write_conf(args):
     rc = os.path.expanduser("~") + "/" + ".sysbusrc"
     with open(rc, "w") as f:
         config.write(f)
+    os.chmod(rc, 0o640)
 
     print("configuration écrite dans %s" % rc)
     print("     url = %s" % (URL_LIVEBOX))
