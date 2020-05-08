@@ -191,7 +191,7 @@ class MacParser(object):
 
         """
         vendors = []
-        if maximum <= 0:
+        if maximum <= 0 or not mac:
             return vendors
         mac_str = self._strip_mac(mac)
         mac_int = self._get_mac_int(mac_str)
