@@ -1797,6 +1797,41 @@ def add_commands(parser):
                     i['callType']
                     ))
 
+    ##
+    # @brief
+    #
+    # @param args
+    #
+    # @return
+    def contacts_cmd(args):
+        """ affiche la liste des contacts """
+        r = requete("Phonebook:getAllContacts")
+        if r is None or not 'status' in r:
+            return
+
+        r = r['status']
+        if len(args) == 1 and args[0] == '?':
+            return print(r[0].keys())
+        print('Key > {:<25} {:<10} {:<10} {:<10}'.format(
+            'Nom Prénom',
+            'Mobile',
+            'Bureau',
+            'Domicile'
+            ))
+        for i in r:
+            if len(args) > 0:
+                print(i[args[0]])
+            else:
+                tels = { 'CELL' : '', 'WORK' : '', 'HOME' : ''}
+                for n in i['telephoneNumbers']:
+                    tels[n['type']] = n['name']
+                print("{:>3} > {:<25} {:>10} {:>10} {:>10}".format(
+                    i['key'],
+                    ' '.join(list(filter(None, i['name'][2:].split(';')))),
+                    tels['CELL'],
+                    tels['WORK'],
+                    tels['HOME']
+                    ))
 
     ################################################################################
 
