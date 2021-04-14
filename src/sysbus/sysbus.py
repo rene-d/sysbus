@@ -1167,8 +1167,9 @@ def livebox_info():
     else:
         o = result['status']
         print("%20s : %s" % ("SoftwareVersion", o['SoftwareVersion']))
-        print("%20s : %s  (NumberOfReboots: %s)" % ("UpTime", str(datetime.timedelta(seconds=int(o['UpTime']))), o['NumberOfReboots']))
-        print("%20s : %s" % ("ExternalIPAddress", o['ExternalIPAddress']))
+        #print("%20s : %s  (NumberOfReboots: %s)" % ("UpTime", str(datetime.timedelta(seconds=int(o.get('UpTime',0)))), o['NumberOfReboots']))
+        #print("%20s : %s" % ("ExternalIPAddress", o['ExternalIPAddress']))
+        exit()
 
         # pas d'objet Devices dans la Livebox 2
         result = requete("Devices.Device.lan:getFirstParameter", { "parameter": "IPAddress" }, silent=True)
@@ -1406,7 +1407,7 @@ def add_commands(parser):
                 if mac_parser is None:
                     s = "%-18s %-15s %c %-35s %s" % (host['MACAddress'], host['InterfaceType'], actif, host['HostName'], host['IPAddress'])
                 else:
-                    s = "%-18s %-12s %-15s %c %-35s %s" % (host['MACAddress'], mac_parser.get_manuf(host['MACAddress']), host['InterfaceType'], actif, host['HostName'], host['IPAddress'])
+                    s = "%-18s %-12s %-15s %c %-35s %s" % (host['MACAddress'], mac_parser.get_manuf(host['MACAddress']), host.get('InterfaceType', ""), actif, host['HostName'], host['IPAddress'])
                 print(s)
 
     #
@@ -1797,136 +1798,6 @@ def add_commands(parser):
                     i['callType']
                     ))
 
-    ##
-    # @brief
-    #
-    # @param args
-    #
-    # @return
-    def contacts_cmd(args):
-        """ affiche la liste des contacts """
-        r = requete("Phonebook:getAllContacts")
-        if r is None or not 'status' in r:
-            return
-
-        r = r['status']
-        if len(args) == 1 and args[0] == '?':
-            return print(r[0].keys())
-        print('Key > {:<25} {:<10} {:<10} {:<10}'.format(
-            'Nom Prénom',
-            'Mobile',
-            'Bureau',
-            'Domicile'
-            ))
-        for i in r:
-            if len(args) > 0:
-                print(i[args[0]])
-            else:
-                tels = { 'CELL' : '', 'WORK' : '', 'HOME' : ''}
-                for n in i['telephoneNumbers']:
-                    tels[n['type']] = n['name']
-                print("{:>3} > {:<25} {:>10} {:>10} {:>10}".format(
-                    i['key'],
-                    ' '.join(list(filter(None, i['name'][2:].split(';')))),
-                    tels['CELL'],
-                    tels['WORK'],
-                    tels['HOME']
-                    ))
-
-    ##
-    # @brief
-    #
-    # @param args
-    #
-    # @return
-    def addcontact_cmd(args):
-        """ ajoute un contact : Nom Prénom RingTone CELL WORK HOME """
-        if len(args) == 1 and args[0] == '?':
-            print('usage : -addcontact Nom Prénom RingTone CELL WORK HOME')
-            print({'contact': {"name":"N:Nom;Prénom;",
-                                 "formattedName":"Nom Prénom",
-                                 "birthDay":"",
-                                 "title":"",
-                                 "organisation":"",
-                                 "url":"",
-                                 "isFavourite":"false",
-                                 "ringtone":"1",
-                                 "telephoneNumbers":[{"name":"0606060606","type":"CELL","preferred":"false"},
-                                                     {"name":"0101010101","type":"WORK","preferred":"false"},
-                                                     {"name":"0202020202","type":"HOME","preferred":"false"}
-                                                    ]
-                                }
-                    })
-            return
-        if len(args) != 6:
-            return debug(3, "incorrect arguments")
-        r = requete("Phonebook:addContactAndGenUUID", 
-                    {'contact': {"name":"N:{};{};".format(args[0], args[1]),
-                                 "formattedName":"{} {}".format(args[0], args[1]),
-                                 "birthDay":"",
-                                 "title":"",
-                                 "organisation":"",
-                                 "url":"",
-                                 "isFavourite":"false",
-                                 "ringtone":"{}".format(args[2]),
-                                 "telephoneNumbers":[{"name":"{}".format(args[3]),"type":"CELL","preferred":"false"},
-                                                     {"name":"{}".format(args[4]),"type":"WORK","preferred":"false"},
-                                                     {"name":"{}".format(args[5]),"type":"HOME","preferred":"false"}
-                                                    ]
-                                }
-                    })
-        if r is None or not 'status' in r:
-            return
-
-        r = r['status']
-        print("Contact créé : {}".format(r))
-
-    ##
-    # @brief
-    #
-    # @param args
-    #
-    # @return
-    def delcontact_cmd(args):
-        """ supprime un contact avec son UID """
-        if len(args) == 1 and args[0] == '?':
-            return print(r[0].keys())
-        if len(args) != 1:
-            return print("Nombre d'arguments incorrect")
-        r = requete("Phonebook:removeContactByUniqueID", 
-                    {"uniqueID":args[0]})
-        if r is None or not 'status' in r:
-            return
-
-        if r['status']:
-            print("Contact supprimé")
-        else:
-            debug(3, "Erreur dans la suppression du contact")
-
-    ##
-    # @brief
-    #
-    # @param args
-    #
-    # @return
-    def delcontacts_cmd(args):
-        """ supprime tous les contacts """
-        r = requete("Phonebook:getAllContacts")
-        if r is None or not 'status' in r:
-            return
-
-        r = r['status']
-        if len(args) == 1 and args[0] == '?':
-            return print(r[0].keys())
-
-        for i in r:
-            r = requete("Phonebook:removeContactByUniqueID", 
-                    {"uniqueID":i['uniqueID']})
-
-            if r['status']:
-                print("{} : Contact supprimé".format(i['uniqueID']))
-            else:
-                debug(3, "Erreur dans la suppression du contact".format(i['uniqueID']))
 
     ################################################################################
 
