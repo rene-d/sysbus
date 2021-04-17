@@ -1545,6 +1545,55 @@ def add_commands(parser):
                 json.dump(r, sys.stdout, indent=4)
 
 
+    def export_natpat_cmd(args):
+        """ exporte la configuration NAT/PAT dans un fichier JSON """
+
+        if len(args) != 1:
+            error("Usage: -export_natpat NOM_FICHIER.json")
+
+        elif args[0]:
+            filename = args[0]
+
+            r = requete('Firewall:getPortForwarding')
+
+            # New empty content
+            content = {"status": {}}
+            # Iterate all items exported
+            for rule, data in r["status"].items():
+                # Skip all rules with hidden upnp (special rules)
+                if not "upnp" in rule:
+                    content["status"][rule] = data
+
+            with open(filename, "w", encoding="utf-8") as file:
+                json.dump(content, file, indent=4)
+
+
+    def import_natpat_cmd(args):
+        """ importe la configuration NAT/PAT depuis un fichier JSON """
+
+        if len(args) != 1:
+            error("Usage: -import_natpat NOM_FICHIER.json")
+
+        elif args[0]:
+            filename = args[0]
+
+            with open(filename, "r", encoding="utf-8") as file:
+                content = json.loads(file.read())
+
+            for rule in content["status"].values():
+                r = requete('Firewall:setPortForwarding',
+                            {"id": rule["Id"],
+                             "description": rule["Description"],
+                             "persistent": True,
+                             "enable": rule["Enable"],
+                             "protocol": rule["Protocol"],
+                             "destinationIPAddress": rule["DestinationIPAddress"],
+                             "internalPort": rule["InternalPort"],
+                             "externalPort": rule["ExternalPort"],
+                             "origin": rule["Origin"],
+                             "sourceInterface": rule["SourceInterface"],
+                             "sourcePrefix": rule["SourcePrefix"]})
+
     # ajout la règle pour vpn sur le NAS, l'interface web de la Livebox empêche d'en mettre sur le port 1701
     def add1701_cmd(args):
         """ règle spéciale pour rajouter la règle de forwarding pour L2TP """
