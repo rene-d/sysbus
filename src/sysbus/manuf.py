@@ -59,8 +59,8 @@ class MacParser(object):
         IOError: If manuf file could not be found.
 
     """
-    MANUF_URL = "https://code.wireshark.org/review/gitweb?p=wireshark.git;a=blob_plain;f=manuf"
-    WFA_URL = "https://code.wireshark.org/review/gitweb?p=wireshark.git;a=blob_plain;f=wka"
+    MANUF_URL = "https://gitlab.com/wireshark/wireshark/-/raw/master/manuf"
+    WFA_URL = "https://gitlab.com/wireshark/wireshark/-/raw/master/wka"
 
     def  __init__(self, manuf_name=None, update=False):
         self._manuf_name = manuf_name or self.get_packaged_manuf_file_path()
