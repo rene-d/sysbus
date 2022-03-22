@@ -1167,8 +1167,9 @@ def livebox_info():
     else:
         o = result['status']
         print("%20s : %s" % ("SoftwareVersion", o['SoftwareVersion']))
-        print("%20s : %s  (NumberOfReboots: %s)" % ("UpTime", str(datetime.timedelta(seconds=int(o['UpTime']))), o['NumberOfReboots']))
-        print("%20s : %s" % ("ExternalIPAddress", o['ExternalIPAddress']))
+        #print("%20s : %s  (NumberOfReboots: %s)" % ("UpTime", str(datetime.timedelta(seconds=int(o.get('UpTime',0)))), o['NumberOfReboots']))
+        #print("%20s : %s" % ("ExternalIPAddress", o['ExternalIPAddress']))
+        exit()
 
         # pas d'objet Devices dans la Livebox 2
         result = requete("Devices.Device.lan:getFirstParameter", { "parameter": "IPAddress" }, silent=True)
@@ -1406,7 +1407,7 @@ def add_commands(parser):
                 if mac_parser is None:
                     s = "%-18s %-15s %c %-35s %s" % (host['MACAddress'], host['InterfaceType'], actif, host['HostName'], host['IPAddress'])
                 else:
-                    s = "%-18s %-12s %-15s %c %-35s %s" % (host['MACAddress'], mac_parser.get_manuf(host['MACAddress']), host['InterfaceType'], actif, host['HostName'], host['IPAddress'])
+                    s = "%-18s %-12s %-15s %c %-35s %s" % (host['MACAddress'], mac_parser.get_manuf(host['MACAddress']), host.get('InterfaceType', ""), actif, host['HostName'], host['IPAddress'])
                 print(s)
 
     #
@@ -1543,6 +1544,55 @@ def add_commands(parser):
                 # pprint.pprint(r)
                 json.dump(r, sys.stdout, indent=4)
 
+
+    def export_natpat_cmd(args):
+        """ exporte la configuration NAT/PAT dans un fichier JSON """
+
+        if len(args) != 1:
+            error("Usage: -export_natpat NOM_FICHIER.json")
+
+        elif args[0]:
+            filename = args[0]
+
+            r = requete('Firewall:getPortForwarding')
+
+            # New empty content
+            content = {"status": {}}
+            # Iterate all items exported
+            for rule, data in r["status"].items():
+                # Skip all rules with hidden upnp (special rules)
+                if not "upnp" in rule:
+                    content["status"][rule] = data
+
+            with open(filename, "w", encoding="utf-8") as file:
+                json.dump(content, file, indent=4)
+
+
+    def import_natpat_cmd(args):
+        """ importe la configuration NAT/PAT depuis un fichier JSON """
+
+        if len(args) != 1:
+            error("Usage: -import_natpat NOM_FICHIER.json")
+
+        elif args[0]:
+            filename = args[0]
+
+            with open(filename, "r", encoding="utf-8") as file:
+                content = json.loads(file.read())
+
+            for rule in content["status"].values():
+                r = requete('Firewall:setPortForwarding',
+                            {"id": rule["Id"],
+                             "description": rule["Description"],
+                             "persistent": True,
+                             "enable": rule["Enable"],
+                             "protocol": rule["Protocol"],
+                             "destinationIPAddress": rule["DestinationIPAddress"],
+                             "internalPort": rule["InternalPort"],
+                             "externalPort": rule["ExternalPort"],
+                             "origin": rule["Origin"],
+                             "sourceInterface": rule["SourceInterface"],
+                             "sourcePrefix": rule["SourcePrefix"]})
 
     # ajout la règle pour vpn sur le NAS, l'interface web de la Livebox empêche d'en mettre sur le port 1701
     def add1701_cmd(args):
