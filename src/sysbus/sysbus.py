@@ -1307,7 +1307,12 @@ def add_commands(parser):
             if last_passphrase != passphrase:
                 last_passphrase = passphrase
                 qr.clear()
-                qr.add_data(passphrase)
+                t = "WPA" if "WPA" in c["Security"]["ModeEnabled"] else "WEP"
+                ssid = c["SSID"]
+                data = f"WIFI:T:{t};S:{ssid};P:{passphrase};"
+                qr.add_data(data)
+                print(f"\033[3m{data}\033[0m")
+
                 qr.make(fit=True)
                 qr.print_ascii(tty=True)
 
