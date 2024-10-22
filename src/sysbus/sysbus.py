@@ -19,7 +19,6 @@ import configparser
 import datetime
 import html
 import subprocess
-import pkg_resources
 from dateutil.tz import tz
 from dateutil import parser as parsedate
 
@@ -58,16 +57,7 @@ except ImportError as e:
 
 
 # initialise la base de données OUI
-manuf_name = pkg_resources.resource_filename(__name__, "manuf")
-try:
-    from .manuf import MacParser
-    mac_parser = MacParser(manuf_name)
-except ImportError:
-    try:
-        from manuf import MacParser
-        mac_parser = MacParser(manuf_name)
-    except ImportError:
-        mac_parser = None
+mac_parser = None
 
 
 ##
@@ -125,12 +115,12 @@ def get_livebox_ip_mac():
     p = subprocess.check_output(['arp', '-n', 'livebox.home'], universal_newlines=True)
 
     # cherche xxx.yyy.zzz.ttt
-    ip = re.search('(\d{1,3}(\.\d{1,3}){3})', p)
+    ip = re.search(r'(\d{1,3}(\.\d{1,3}){3})', p)
     if ip is None:
         return
 
     # cherche XX:XX:XX:XX:XX:XX (ou xx-xx-...)
-    eth = re.search('([\dA-Fa-f]{1,2}(?:[-:][\dA-Fa-f]{1,2}){5})', p)
+    eth = re.search(r'([\dA-Fa-f]{1,2}(?:[-:][\dA-Fa-f]{1,2}){5})', p)
     if eth is None:
         return ip.group(0), None
 
@@ -145,11 +135,11 @@ def get_livebox_ip_mac():
 #
 # @return
 def compare_mac(a, b):
-    m = re.findall('([a-fA-F\d]{1,2})[:-]?', a)
+    m = re.findall(r'([a-fA-F\d]{1,2})[:-]?', a)
     if len(m) != 6: return False
     a = [ int(x, 16) for x in m ]
 
-    m = re.findall('([a-fA-F\d]{1,2})[:-]?', b)
+    m = re.findall(r'([a-fA-F\d]{1,2})[:-]?', b)
     if len(m) != 6: return False
     b = [ int(x, 16) for x in m ]
 
@@ -1971,7 +1961,7 @@ def main():
 
     if args.update_oui:
         if mac_parser is None:
-            error("module anuf non trouvé")
+            error("module manuf non trouvé")
             exit(2)
         MacParser(manuf_name=manuf_name, update=True)
         debug(1, "mise à jour:", manuf_name)

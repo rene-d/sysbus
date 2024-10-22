@@ -12,7 +12,7 @@ with open(path.join(here, "README.en.md"), encoding="utf-8") as f:
 
 setup(
     name="sysbus",
-    version="1.0.10",
+    version="1.0.11",
     description="Control by script your Livebox 2,3,4",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -38,7 +38,6 @@ setup(
     packages=find_packages(where="src"),
     python_requires=">=3.6",
     install_requires=["requests", "graphviz", "qrcode", "python-dateutil"],
-    package_data={"sysbus": ["manuf"]},
     entry_points={"console_scripts": ["sysbus=sysbus.sysbus:main"]},
     project_urls={
         "Source": "https://github.com/rene-d/sysbus",
